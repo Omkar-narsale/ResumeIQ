@@ -1,7 +1,7 @@
 # AI Resume & Interview Coach - Setup Guide
 
 ## Overview
-This is a production-ready Streamlit application that helps users improve their resumes and interview skills using AI-powered feedback powered by **Google Gemini (Free)**.
+This is a production-ready Streamlit application that helps users improve their resumes and interview skills using AI-powered feedback powered by **Ollama** (local LLM).
 
 ## Features
 - 📄 **Resume Analysis**: Upload a PDF resume and get AI-powered feedback including score, strengths, weaknesses, and improvement suggestions
@@ -11,7 +11,7 @@ This is a production-ready Streamlit application that helps users improve their 
 
 ### 1. Prerequisites
 - Python 3.8 or higher
-- Google API key (free at https://aistudio.google.com/apikey)
+- Ollama installed and running locally (https://ollama.ai)
 
 ### 2. Installation
 
@@ -32,16 +32,13 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. Get Your Free Google API Key
+### 3. Setup Ollama
 
-1. Go to: https://aistudio.google.com/apikey
-2. Click "Create API Key"
-3. Copy your API key (looks like: `AIza...`)
-4. Create `.env` file in project root:
-   ```
-   GOOGLE_API_KEY=YOUR_KEY_HERE
-   ```
-5. Done! No payment required, completely free.
+1. Install Ollama from https://ollama.ai
+2. Start the Ollama service
+3. Pull a model (e.g., `ollama pull mistral` or `ollama pull neural-chat`)
+4. Ensure Ollama is running on `http://localhost:11434` (default)
+5. No API keys needed - everything runs locally!
 
 ### 4. Run the Application
 
@@ -93,7 +90,7 @@ ai-coach/
 
 ### Resume Analysis
 - Extracts text from PDF resumes
-- Uses Google Gemini AI for intelligent analysis
+- Uses Ollama AI models for intelligent analysis
 - Provides structured feedback with:
   - Quantitative score
   - Strengths identification
@@ -122,9 +119,9 @@ ai-coach/
 ## Technical Details
 
 ### Models
-- Uses `gemini-1.5-flash` (Fast, free, capable model)
+- Uses Ollama with models like `mistral` or `neural-chat` (configurable)
 - Max tokens per request: 1024
-- Completely FREE with generous rate limits
+- Completely FREE - runs locally on your machine
 
 ### PDF Processing
 - Extracts text from all pages
@@ -144,16 +141,16 @@ ai-coach/
 
 ## Dependencies
 - **streamlit**: Web UI framework
-- **google-generativeai**: Google Gemini API client
+- **requests**: HTTP client for Ollama API
 - **PyPDF2**: PDF parsing library
 - **python-dotenv**: Environment variable management
 
 ## Troubleshooting
 
-### API Key Error
-- Ensure `GOOGLE_API_KEY` is set in `.env`
-- Get free key at: https://aistudio.google.com/apikey
-- Make sure you copied the full key
+### API Error
+- Ensure Ollama is running (`ollama serve` or Ollama app is open)
+- Check that Ollama is accessible at `http://localhost:11434`
+- Verify you have pulled a model with `ollama pull mistral`
 
 ### PDF Upload Issues
 - Ensure file is a valid PDF
@@ -161,20 +158,21 @@ ai-coach/
 - Check that PDF contains extractable text (not image-based scans)
 
 ### Slow Responses
-- Normal for first request
-- Check your internet connection
-- Gemini-1.5-flash is very fast once initialized
+- First request may be slower if Ollama model is loading
+- Ensure Ollama is running and warmed up
+- Check your system resources (CPU/RAM)
 
 ## Pricing
-- **100% FREE** - Google Gemini has generous free tier
-- No credit card required
-- Unlimited requests (with fair use limits)
+- **100% FREE** - Ollama runs locally on your machine
+- No internet required (fully local processing)
+- No account creation needed
 
 ## Performance Notes
-- First request may be slightly slower as Streamlit initializes
-- Subsequent requests are very fast
+- First request may be slower as Ollama loads the model into memory
+- Subsequent requests are fast depending on your system specs
 - Resume parsing is instant for typical files
-- Interview feedback generation takes 2-5 seconds
+- Interview feedback generation takes 2-5 seconds (varies by model and hardware)
+- Performance improves with more RAM/faster CPU
 
 ## Future Enhancements
 - Support for other file formats (DOCX, TXT)
@@ -190,6 +188,7 @@ This project is provided as-is for educational purposes.
 ## Support
 For issues or questions:
 1. Check the troubleshooting section
-2. Verify your Google API key at https://aistudio.google.com/apikey
-3. Check your internet connection
-4. Review error messages carefully
+2. Verify Ollama is running and accessible
+3. Ensure you have pulled a model with `ollama pull`
+4. Check your system resources and internet connection
+5. Review error messages carefully
