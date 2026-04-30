@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Coaching - Career Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f9fafb;
+            color: #111827;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background-color: #ffffff;
+            border-right: 1px solid #e5e7eb;
+            padding: 32px 0;
+            overflow-y: auto;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            z-index: 100;
+        }
+
+        .logo {
+            padding: 0 24px 32px;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 32px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: #4F46E5;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+        }
+
+        .nav-item {
+            padding: 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            color: #6b7280;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background-color: #f3f4f6;
+            color: #4F46E5;
+        }
+
+        .nav-link.active {
+            background-color: #eef2ff;
+            color: #4F46E5;
+            border-right: 3px solid #4F46E5;
+            padding-left: 21px;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 32px;
+            min-height: 100vh;
+            background-color: #f9fafb;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .header-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .header-subtitle {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .user-status {
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        /* Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .dashboard-grid.full-width {
+            grid-template-columns: 1fr;
+        }
+
+        /* Cards */
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: #d1d5db;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .card-subtitle {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .badge {
+            background-color: #eef2ff;
+            color: #4F46E5;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Resume Score Card */
+        .score-display {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 20px;
+        }
+
+        .score-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: conic-gradient(#4F46E5 0deg 288deg, #e5e7eb 288deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .score-circle-inner {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .score-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: #4F46E5;
+        }
+
+        .score-label {
+            font-size: 11px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .score-details {
+            flex: 1;
+        }
+
+        .score-detail {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .score-detail-label {
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .score-detail-value {
+            color: #111827;
+            font-weight: 600;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4F46E5 0%, #7C3AED 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* Job Match Visualization */
+        .match-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .match-item {
+            text-align: center;
+            padding: 16px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+        }
+
+        .match-percentage {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4F46E5;
+        }
+
+        .match-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        /* Expandable Sections */
+        .expandable {
+            margin-top: 16px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 16px;
+        }
+
+        .expand-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 8px 0;
+            font-weight: 500;
+            color: #111827;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .expand-header:hover {
+            color: #4F46E5;
+        }
+
+        .expand-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease;
+            font-size: 16px;
+        }
+
+        .expand-icon.open {
+            transform: rotate(180deg);
+        }
+
+        .expand-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease;
+        }
+
+        .expand-content.open {
+            max-height: 500px;
+        }
+
+        .expand-body {
+            padding: 12px 0;
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .feedback-item {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding: 8px;
+            background-color: #f9fafb;
+            border-radius: 6px;
+            border-left: 3px solid #4F46E5;
+        }
+
+        .feedback-icon {
+            flex-shrink: 0;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        /* Input Fields */
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 6px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Buttons */
+        .button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            color: white;
+        }
+
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .button-secondary {
+            background-color: #f3f4f6;
+            color: #111827;
+            border: 1px solid #e5e7eb;
+        }
+
+        .button-secondary:hover {
+            background-color: #e5e7eb;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        /* Stats */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .stat {
+            background-color: #f9fafb;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #4F46E5;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+
+            .main-content {
+                margin-left: 200px;
+                padding: 16px;
+            }
+
+            .header-title {
+                font-size: 24px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .match-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .sidebar {
+                width: 0;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                width: 260px;
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 16px;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: start;
+                gap: 16px;
+            }
+
+            .match-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .score-display {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <div class="logo-text">
+                <div class="logo-icon">AI</div>
+                AI Coaching
+            </div>
+        </div>
+
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link active" data-section="resume">
+                    <span class="nav-icon">📄</span>
+                    Resume Analyzer
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-section="matcher">
+                    <span class="nav-icon">🎯</span>
+                    Job Matcher
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-section="rewriter">
+                    <span class="nav-icon">✏️</span>
+                    Resume Rewriter
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-section="interview">
+                    <span class="nav-icon">🎤</span>
+                    Interview Coach
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-section="advisor">
+                    <span class="nav-icon">💼</span>
+                    Career Advisor
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1 class="header-title">Resume Analyzer</h1>
+                <p class="header-subtitle">Last updated: Today at 2:30 PM</p>
+            </div>
+            <div class="user-profile">
+                <div class="avatar">JD</div>
+                <div class="user-info">
+                    <div class="user-name">John Doe</div>
+                    <div class="user-status">Active</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resume Score Section -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Resume Score</div>
+                        <div class="card-subtitle">Overall assessment</div>
+                    </div>
+                    <span class="badge">Strong</span>
+                </div>
+
+                <div class="score-display">
+                    <div class="score-circle">
+                        <div class="score-circle-inner">
+                            <div class="score-number">82</div>
+                            <div class="score-label">/100</div>
+                        </div>
+                    </div>
+                    <div class="score-details">
+                        <div class="score-detail">
+                            <span class="score-detail-label">Format Quality</span>
+                            <span class="score-detail-value">88%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 88%"></div>
+                        </div>
+
+                        <div class="score-detail" style="margin-top: 12px;">
+                            <span class="score-detail-label">Content Strength</span>
+                            <span class="score-detail-value">76%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 76%"></div>
+                        </div>
+
+                        <div class="score-detail" style="margin-top: 12px;">
+                            <span class="score-detail-label">Keywords Match</span>
+                            <span class="score-detail-value">82%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 82%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="expandable">
+                    <div class="expand-header" onclick="toggleExpand(this)">
+                        <span>💡 Improvement Tips</span>
+                        <span class="expand-icon">▼</span>
+                    </div>
+                    <div class="expand-content">
+                        <div class="expand-body">
+                            <div class="feedback-item">
+                                <span class="feedback-icon">→</span>
+                                <span>Add more quantifiable achievements in your work experience</span>
+                            </div>
+                            <div class="feedback-item">
+                                <span class="feedback-icon">→</span>
+                                <span>Include specific technical skills related to your target roles</span>
+                            </div>
+                            <div class="feedback-item">
+                                <span class="feedback-icon">→</span>
+                                <span>Consider adding a professional summary section</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Job Match Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Job Match Analysis</div>
+                        <div class="card-subtitle">Top matches for your profile</div>
+                    </div>
+                </div>
+
+                <div class="match-grid">
+                    <div class="match-item">
+                        <div class="match-percentage">94%</div>
+                        <div class="match-label">Senior Dev</div>
+                    </div>
+                    <div class="match-item">
+                        <div class="match-percentage">87%</div>
+                        <div class="match-label">Tech Lead</div>
+                    </div>
+                    <div class="match-item">
+                        <div class="match-percentage">79%</div>
+                        <div class="match-label">PM Role</div>
+                    </div>
+                </div>
+
+                <div class="stats-container" style="margin-top: 20px;">
+                    <div class="stat">
+                        <div class="stat-value">24</div>
+                        <div class="stat-label">Matching Jobs</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">Applied</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">3</div>
+                        <div class="stat-label">Interviews</div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="button button-primary">Find More Jobs</button>
+                    <button class="button button-secondary">View Matches</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resume Rewriter Section -->
+        <div class="card" style="margin-bottom: 24px;">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">Optimize Your Resume</div>
+                    <div class="card-subtitle">AI-powered suggestions for your next application</div>
+                </div>
+                <span class="badge">AI Powered</span>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Target Job Title</label>
+                <input type="text" placeholder="e.g., Senior Full Stack Engineer" value="Senior Full Stack Engineer">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Resume Section to Improve</label>
+                <select>
+                    <option>Select a section...</option>
+                    <option selected>Professional Summary</option>
+                    <option>Work Experience</option>
+                    <option>Skills</option>
+                    <option>Education</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Current Content</label>
+                <textarea placeholder="Paste the section you'd like to improve...">Experienced software engineer with 5+ years building scalable web applications. Proficient in JavaScript, React, Node.js, and cloud technologies.</textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="button button-primary">✨ Generate Suggestions</button>
+                <button class="button button-secondary">Clear</button>
+            </div>
+
+            <div class="expandable">
+                <div class="expand-header" onclick="toggleExpand(this)">
+                    <span>📝 Generated Alternatives</span>
+                    <span class="expand-icon">▼</span>
+                </div>
+                <div class="expand-content">
+                    <div class="expand-body">
+                        <div class="feedback-item" style="border-left-color: #10b981;">
+                            <span class="feedback-icon">✓</span>
+                            <div>
+                                <div style="font-weight: 600; color: #111827; margin-bottom: 4px;">Option 1</div>
+                                <span>Results-driven Full Stack Engineer with 5+ years of expertise developing and deploying scalable web applications. Specialized in modern JavaScript ecosystem (React, Node.js), AWS cloud infrastructure, and agile development practices. Proven track record of leading cross-functional teams to deliver high-impact solutions.</span>
+                            </div>
+                        </div>
+                        <div class="feedback-item" style="border-left-color: #3b82f6; margin-top: 12px;">
+                            <span class="feedback-icon">✓</span>
+                            <div>
+                                <div style="font-weight: 600; color: #111827; margin-bottom: 4px;">Option 2</div>
+                                <span>Senior Full Stack Engineer with 5+ years of experience architecting and implementing robust web applications at scale. Expert in JavaScript, React, Node.js, and cloud technologies. Skilled in system design, performance optimization, and mentoring junior developers.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interview Prep Section -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Interview Preparation</div>
+                        <div class="card-subtitle">Practice and improve</div>
+                    </div>
+                </div>
+
+                <div class="stats-container">
+                    <div class="stat">
+                        <div class="stat-value">8</div>
+                        <div class="stat-label">Sessions</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">7.8</div>
+                        <div class="stat-label">Avg Score</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">92%</div>
+                        <div class="stat-label">Improvement</div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="button button-primary">Start Session</button>
+                    <button class="button button-secondary">View History</button>
+                </div>
+
+                <div class="expandable">
+                    <div class="expand-header" onclick="toggleExpand(this)">
+                        <span>🎤 Recent Feedback</span>
+                        <span class="expand-icon">▼</span>
+                    </div>
+                    <div class="expand-content">
+                        <div class="expand-body">
+                            <div class="feedback-item" style="border-left-color: #f59e0b;">
+                                <span class="feedback-icon">💬</span>
+                                <span><strong>Session 8:</strong> Great eye contact and pace. Work on providing more specific examples from your experience.</span>
+                            </div>
+                            <div class="feedback-item" style="border-left-color: #10b981; margin-top: 8px;">
+                                <span class="feedback-icon">💬</span>
+                                <span><strong>Session 7:</strong> Excellent technical depth. Challenge yourself with more complex scenarios.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Career Advisor Section -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">Career Insights</div>
+                        <div class="card-subtitle">Personalized guidance</div>
+                    </div>
+                </div>
+
+                <div class="feedback-item" style="border-left-color: #4F46E5; margin-bottom: 12px;">
+                    <span class="feedback-icon">📊</span>
+                    <div>
+                        <div style="font-weight: 600; color: #111827;">Growth Path: Senior Engineer</div>
+                        <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">Based on your skills and experience level</div>
+                    </div>
+                </div>
+
+                <div class="feedback-item" style="border-left-color: #10b981;">
+                    <span class="feedback-icon">📈</span>
+                    <div>
+                        <div style="font-weight: 600; color: #111827;">Skills to Develop</div>
+                        <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">System design, team leadership, cloud architecture</div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="button button-primary">Get AI Advice</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Navigation handling
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                // Remove active class from all links
+                document.querySelectorAll('.nav-link').forEach(l => {
+                    l.classList.remove('active');
+                });
+
+                // Add active class to clicked link
+                link.classList.add('active');
+
+                // Update header (optional - just for demo)
+                const section = link.getAttribute('data-section');
+                const titles = {
+                    'resume': 'Resume Analyzer',
+                    'matcher': 'Job Matcher',
+                    'rewriter': 'Resume Rewriter',
+                    'interview': 'Interview Coach',
+                    'advisor': 'Career Advisor'
+                };
+
+                document.querySelector('.header-title').textContent = titles[section];
+            });
+        });
+
+        // Expandable sections
+        function toggleExpand(element) {
+            const icon = element.querySelector('.expand-icon');
+            const content = element.nextElementSibling;
+
+            icon.classList.toggle('open');
+            content.classList.toggle('open');
+        }
+
+        // Button interactions
+        document.querySelectorAll('.button-primary, .button-secondary').forEach(button => {
+            button.addEventListener('click', () => {
+                // Add visual feedback
+                button.style.opacity = '0.8';
+                setTimeout(() => {
+                    button.style.opacity = '1';
+                }, 100);
+            });
+        });
+
+        // Input focus effects
+        document.querySelectorAll('input, textarea, select').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.style.transition = 'all 0.2s ease';
+            });
+        });
+    </script>
+</body>
+</html>
