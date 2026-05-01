@@ -4,6 +4,7 @@ Job matching, resume rewriting, interview prep, and career guidance
 """
 
 from utils.llm_handler import get_llm_handler
+from utils.local_analyzer import analyze_resume_locally
 
 
 def match_job_description(resume_text: str, job_description: str) -> dict:
@@ -112,88 +113,217 @@ Format as numbered list:
 
 
 def analyze_resume(resume_text: str, target_role: str = None) -> dict:
+    """Analyze resume using local text analysis (no LLM)"""
+
+    # Use local analyzer instead of LLM
+    result = analyze_resume_locally(resume_text, target_role)
+
+    # Define priority skills by role
+    role_priority = {
+        "data analyst": ["SQL", "Python", "Excel", "Power BI", "Statistics"],
+        "software engineer": ["Python", "Java", "System Design", "DSA", "Git"],
+        "ml engineer": ["Python", "Machine Learning", "TensorFlow", "PyTorch", "Statistics"],
+        "frontend developer": ["React", "JavaScript", "CSS", "HTML", "UI/UX"],
+        "backend developer": ["Python", "Java", "SQL", "API", "Database Design"],
+        "devops engineer": ["Docker", "Kubernetes", "AWS", "Linux", "CI/CD"],
+    }
+
+    # Get priority skills for role
+    priority_skills = []
+    role_lower = target_role.lower() if target_role else "general"
+    for key in role_priority:
+        if key in role_lower:
+            priority_skills = role_priority[key]
+            break
+
+    if not priority_skills:
+        priority_skills = ["Communication", "Problem Solving", "Teamwork", "Time Management"]
+
+    # Extract strengths/weaknesses as lists
+    strengths_list = result["strengths"].split("\n") if result["strengths"] else []
+    weaknesses_list = result["weaknesses"].split("\n") if result["weaknesses"] else []
+    suggestions_list = result["suggestions"].split("\n") if result["suggestions"] else []
+
+    # Create learning roadmap
+    roadmap_beginner = suggestions_list[0] if suggestions_list else "Start with fundamentals"
+    roadmap_intermediate = f"Master the top {len(priority_skills)} skills for {target_role or 'your role'}"
+    roadmap_advanced = "Lead projects and mentor others"
+
+    return {
+        "score": result["score"],
+        "strengths": result["strengths"],
+        "weaknesses": result["weaknesses"],
+        "suggestions": result["suggestions"],
+        "matched_skills": strengths_list[:3],
+        "missing_skills": weaknesses_list[:3],
+        "priority_skills": priority_skills[:3],
+        "learning_roadmap": {
+            "beginner": roadmap_beginner,
+            "intermediate": roadmap_intermediate,
+            "advanced": roadmap_advanced
+        }
+    }
+
+
+def generate_career_roadmap_fast(target_role: str, resume_text: str = None) -> dict:
     """
-    Analyze resume and return structured feedback with score, strengths, weaknesses, suggestions
+    Generate FAST role-specific learning roadmap without LLM (local analysis only)
 
     Args:
-        resume_text: Resume content
-        target_role: Optional target role for role-specific analysis
+        target_role: Desired career position
+        resume_text: Optional resume text for skill analysis
 
     Returns:
-        Dictionary with score, strengths, weaknesses, suggestions
+        Dictionary with roadmap, missing_skills, focus_areas, next_actions
     """
-    llm = get_llm_handler()
+    from utils.local_analyzer import analyze_resume_locally
+    import re
 
-    role_focus = ""
-    if target_role:
-        role_lower = target_role.lower()
-        if "data analyst" in role_lower:
-            role_focus = """
-ROLE AWARENESS - Data Analyst:
-Focus on: SQL, Python, Data visualization, Statistics, Excel, Power BI
-Avoid: System design, Backend architecture, DevOps"""
-        elif "software engineer" in role_lower or "backend" in role_lower:
-            role_focus = """
-ROLE AWARENESS - Software Engineer:
-Focus on: DSA, Projects, System design, APIs, Backend systems
-Avoid: Statistics, Data visualization tools"""
-        elif "frontend" in role_lower:
-            role_focus = """
-ROLE AWARENESS - Frontend Developer:
-Focus on: React/Vue, JavaScript, CSS, UI/UX, Performance
-Avoid: Database design, System architecture"""
-        elif "ml engineer" in role_lower or "machine learning" in role_lower:
-            role_focus = """
-ROLE AWARENESS - ML Engineer:
-Focus on: Machine Learning, Deep Learning, Python, TensorFlow, Mathematics
-Avoid: Frontend development, DevOps infrastructure"""
-        elif "devops" in role_lower:
-            role_focus = """
-ROLE AWARENESS - DevOps Engineer:
-Focus on: Docker, Kubernetes, CI/CD, AWS/GCP, Infrastructure
-Avoid: Frontend development, UI/UX"""
+    role_lower = target_role.lower()
 
-    prompt = f"""You are an expert resume evaluator.
+    # Role-specific skill mappings
+    role_skills_map = {
+        "data analyst": {
+            "required": ["SQL", "Python", "Excel", "Power BI", "Tableau", "Statistics", "Data Visualization", "Pandas", "R"],
+            "focus": "SQL, Python, Excel, Power BI, Statistics",
+            "month1": ["Learn SQL joins and window functions", "Master Excel pivot tables and VLOOKUP"],
+            "month2": ["Python pandas for data manipulation", "Create Power BI dashboards"],
+            "month3": ["Statistical analysis", "Tableau visualization"]
+        },
+        "software engineer": {
+            "required": ["Python", "Java", "JavaScript", "C++", "System Design", "DSA", "Git", "Docker", "SQL"],
+            "focus": "DSA, System Design, APIs, Database, Git",
+            "month1": ["Master data structures and algorithms", "Learn Git workflows"],
+            "month2": ["Build REST APIs", "Database design basics"],
+            "month3": ["System design principles", "Code review skills"]
+        },
+        "ml engineer": {
+            "required": ["Python", "Machine Learning", "TensorFlow", "PyTorch", "Pandas", "NumPy", "Statistics", "SQL", "Deep Learning"],
+            "focus": "Python, Machine Learning, Deep Learning, MLOps",
+            "month1": ["Advanced Python and NumPy", "Scikit-learn machine learning"],
+            "month2": ["Deep learning with PyTorch or TensorFlow", "Model evaluation"],
+            "month3": ["MLOps and model deployment", "A/B testing"]
+        },
+        "frontend developer": {
+            "required": ["React", "JavaScript", "TypeScript", "CSS", "HTML", "UI/UX", "Jest", "Redux", "Git"],
+            "focus": "React, JavaScript, CSS, UI/UX, Testing",
+            "month1": ["React hooks and component design", "JavaScript ES6+ features"],
+            "month2": ["CSS Grid and Flexbox mastery", "Redux or state management"],
+            "month3": ["Testing frameworks (Jest, React Testing)", "Performance optimization"]
+        },
+        "backend developer": {
+            "required": ["Python", "Java", "Node.js", "SQL", "APIs", "Database", "Docker", "Git", "Authentication"],
+            "focus": "APIs, Databases, System Design, Authentication",
+            "month1": ["RESTful API design", "SQL optimization"],
+            "month2": ["Database indexing and scaling", "Authentication & security"],
+            "month3": ["Microservices patterns", "Message queues"]
+        },
+        "devops engineer": {
+            "required": ["Docker", "Kubernetes", "AWS", "Linux", "Git", "CI/CD", "Jenkins", "Terraform", "Monitoring"],
+            "focus": "Docker, Kubernetes, CI/CD, AWS, Linux",
+            "month1": ["Docker containers and images", "Kubernetes basics"],
+            "month2": ["CI/CD pipelines (GitHub Actions, Jenkins)", "AWS services"],
+            "month3": ["Infrastructure as code (Terraform)", "Monitoring and logging"]
+        }
+    }
 
-Analyze the given resume and provide a structured evaluation.
+    # Find matching role
+    matched_role = None
+    for key in role_skills_map:
+        if key in role_lower:
+            matched_role = key
+            break
 
-RESUME:
-{resume_text}
+    if not matched_role:
+        matched_role = "software engineer"  # Default
 
-TARGET ROLE: {target_role if target_role else 'General Professional'}{role_focus}
+    role_data = role_skills_map[matched_role]
+    required_skills = role_data["required"]
 
-IMPORTANT RULES (STRICT):
-1. Output MUST be plain text ONLY
-2. DO NOT use HTML tags
-3. DO NOT return empty sections
-4. If information is missing, provide reasonable assumption
-5. Keep output structured and clean
-6. DO NOT return code or markdown blocks
-7. Maximum 150-200 words total
+    # Extract actual skills from resume
+    detected_skills = []
+    missing_skills = list(required_skills)  # Start with all required
 
-OUTPUT FORMAT (FOLLOW EXACTLY):
+    if resume_text:
+        # Extract skills using regex patterns
+        skill_patterns = {
+            "SQL": r"\bsql\b",
+            "Python": r"\bpython\b",
+            "Java": r"\bjava\b",
+            "JavaScript": r"\bjavascript|js\b",
+            "TypeScript": r"\btypescript\b",
+            "React": r"\breact\b",
+            "Vue": r"\bvue\b",
+            "Angular": r"\bangular\b",
+            "Node.js": r"\bnode\.?js\b",
+            "Express": r"\bexpress\b",
+            "Django": r"\bdjango\b",
+            "Flask": r"\bflask\b",
+            "C++": r"\bc\+\+|cpp\b",
+            "C#": r"\bc#|csharp\b",
+            "R": r"\br\b",
+            "Excel": r"\bexcel\b",
+            "Power BI": r"\bpower\s?bi\b",
+            "Tableau": r"\btableau\b",
+            "Statistics": r"\bstatistics|statistical\b",
+            "Data Visualization": r"\bdata\s?visualization|visualization\b",
+            "Pandas": r"\bpandas\b",
+            "NumPy": r"\bnumpy\b",
+            "Scikit-learn": r"\bscikit-learn|sklearn\b",
+            "TensorFlow": r"\btensorflow\b",
+            "PyTorch": r"\bpytorch\b",
+            "Machine Learning": r"\bmachine\s?learning|ml\b",
+            "Deep Learning": r"\bdeep\s?learning\b",
+            "System Design": r"\bsystem\s?design\b",
+            "DSA": r"\bdsa|data\s?structures|algorithms\b",
+            "Docker": r"\bdocker\b",
+            "Kubernetes": r"\bkubernetes|k8s\b",
+            "AWS": r"\baws\b",
+            "Git": r"\bgit\b",
+            "Linux": r"\blinux\b",
+            "CI/CD": r"\bci/cd|ci\s?cd\b",
+            "Jenkins": r"\bjenkins\b",
+            "Terraform": r"\bterraform\b",
+            "MongoDB": r"\bmongodb\b",
+            "PostgreSQL": r"\bpostgresql\b",
+            "MySQL": r"\bmysql\b",
+            "APIs": r"\bapi|rest\b",
+            "Authentication": r"\bauthentication|auth\b",
+            "UI/UX": r"\bui/ux|ux/ui\b",
+            "Jest": r"\bjest\b",
+            "Redux": r"\bredux\b"
+        }
 
-Score: X/10
+        text_lower = resume_text.lower()
+        for skill_name, pattern in skill_patterns.items():
+            if re.search(pattern, text_lower):
+                detected_skills.append(skill_name)
+                # Remove from missing if it was there
+                if skill_name in missing_skills:
+                    missing_skills.remove(skill_name)
 
-Strengths:
-* Point 1
-* Point 2
-* Point 3
+    # Format output
+    strong_skills_text = ", ".join(detected_skills[:5]) if detected_skills else "None detected in resume"
+    missing_skills_text = ", ".join(missing_skills[:5]) if missing_skills else "All required skills present"
 
-Weaknesses:
-* Point 1
-* Point 2
-* Point 3
+    return {
+        "strong_skills": strong_skills_text,
+        "missing_skills": missing_skills_text,
+        "roadmap": f"""MONTH 1-2 (Foundation):
+• {role_data['month1'][0]}
+• {role_data['month1'][1]}
 
-Suggestions:
-* Improvement 1
-* Improvement 2
-* Improvement 3"""
+MONTH 3-4 (Intermediate):
+• {role_data['month2'][0]}
+• {role_data['month2'][1]}
 
-    system_prompt = "You are an expert resume reviewer. Provide SPECIFIC, CONCRETE feedback based ONLY on the resume content. Be honest but constructive. Output PLAIN TEXT ONLY - no HTML tags. Follow the format exactly."
-
-    response = llm.ask_claude(prompt, system_prompt)
-    return parse_resume_analysis(response)
+MONTH 5-6 (Advanced):
+• {role_data['month3'][0]}
+• {role_data['month3'][1]}""",
+        "focus_areas": f"• {role_data['focus'].split(',')[0]}\n• {role_data['focus'].split(',')[1]}\n• {role_data['focus'].split(',')[2]}",
+        "next_actions": f"• Focus on: {missing_skills_text.split(',')[0] if missing_skills else 'Advanced skills'}\n• Join relevant communities\n• Build portfolio project",
+        "timeline": "6 months for intermediate level"
+    }
 
 
 def generate_career_roadmap(target_role: str, resume_text: str = None) -> dict:
@@ -344,6 +474,8 @@ def parse_questions_response(response: str) -> list:
 
 def parse_resume_analysis(response: str) -> dict:
     """Parse resume analysis response into structured format"""
+
+    # START WITH EMPTY - FORCE LLM TO PROVIDE REAL DATA
     result = {
         "score": "0/10",
         "strengths": "",
@@ -351,36 +483,90 @@ def parse_resume_analysis(response: str) -> dict:
         "suggestions": ""
     }
 
+    if not response or len(response.strip()) < 10:
+        # LLM didn't return valid response
+        print(f"⚠️ WARNING: LLM returned empty/short response: {repr(response[:50])}")
+        result["score"] = "ERROR"
+        result["strengths"] = "❌ No LLM response received"
+        result["weaknesses"] = "Check if Ollama is running: ollama serve"
+        result["suggestions"] = "Restart Ollama and try again"
+        return result
+
     lines = response.split("\n")
     current_section = None
     current_content = []
+    has_score = False
 
     for line in lines:
         line_upper = line.upper()
+        line_clean = line.strip()
 
-        if line_upper.startswith("SCORE:"):
-            result["score"] = line.replace("SCORE:", "").replace("Score:", "").strip()
+        if not line_clean or "<" in line_clean:
+            continue
+
+        if "SCORE:" in line_upper:
+            try:
+                score_part = line.split(":")[-1].strip()
+                if "/" in score_part:
+                    score_num = score_part.split("/")[0].strip()
+                    result["score"] = f"{score_num}/10"
+                    has_score = True
+                elif score_part and score_part[0].isdigit():
+                    num = ''.join(c for c in score_part.split()[0] if c.isdigit())
+                    if num:
+                        result["score"] = f"{num}/10"
+                        has_score = True
+            except:
+                pass
             current_section = None
-        elif line_upper.startswith("STRENGTHS:"):
+            current_content = []
+
+        elif "STRENGTHS:" in line_upper:
             if current_section and current_content:
-                result[current_section] = "\n".join(current_content).strip()
+                result[current_section] = "\n".join(current_content)
             current_section = "strengths"
             current_content = []
-        elif line_upper.startswith("WEAKNESSES:"):
+
+        elif "WEAKNESSES:" in line_upper:
             if current_section and current_content:
-                result[current_section] = "\n".join(current_content).strip()
+                result[current_section] = "\n".join(current_content)
             current_section = "weaknesses"
             current_content = []
-        elif line_upper.startswith("SUGGESTIONS:"):
+
+        elif "SUGGESTIONS:" in line_upper:
             if current_section and current_content:
-                result[current_section] = "\n".join(current_content).strip()
+                result[current_section] = "\n".join(current_content)
             current_section = "suggestions"
             current_content = []
-        elif current_section and line.strip():
-            current_content.append(line.strip())
+
+        elif current_section and line_clean:
+            # Handle bullet points
+            if line_clean.startswith("*"):
+                bullet_text = line_clean[1:].strip()
+            elif line_clean.startswith("-"):
+                bullet_text = line_clean[1:].strip()
+            else:
+                bullet_text = line_clean
+
+            if bullet_text:
+                # Ensure bullet format
+                if not bullet_text.startswith("•"):
+                    bullet_text = f"• {bullet_text}"
+                current_content.append(bullet_text)
 
     if current_section and current_content:
-        result[current_section] = "\n".join(current_content).strip()
+        result[current_section] = "\n".join(current_content)
+
+    # Validate we got real data
+    if not has_score:
+        print(f"⚠️ WARNING: No score found in response")
+        result["score"] = "ERROR"
+
+    if not result["strengths"] or not result["weaknesses"] or not result["suggestions"]:
+        print(f"⚠️ WARNING: Missing sections in response")
+        print(f"   Strengths: {bool(result['strengths'])}")
+        print(f"   Weaknesses: {bool(result['weaknesses'])}")
+        print(f"   Suggestions: {bool(result['suggestions'])}")
 
     return result
 

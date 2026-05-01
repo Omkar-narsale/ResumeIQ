@@ -7,10 +7,42 @@ import streamlit as st
 import os
 from datetime import datetime
 from dotenv import load_dotenv
-from utils.features import analyze_resume, generate_career_roadmap
+from utils.features import analyze_resume, generate_career_roadmap_fast
 from utils.resume_parser import extract_text
+from utils.unified_analysis import generate_unified_analysis, get_cache_key
+from utils.auth import is_logged_in, get_current_user
+from utils.progress_tracker import add_score_record
+from pages.login import show_login_page, show_logout_button
+from pages.progress_dashboard import show_progress_dashboard
+from utils.resume_exporter import generate_pdf_resume, generate_docx_resume, generate_csv_export
+from pages.salary_guide import show_salary_guide
 
 load_dotenv()
+
+# Initialize database
+import db
+db.init_db()
+
+# Check authentication
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "user_id" not in st.session_state:
+    st.session_state.user_id = None
+if "email" not in st.session_state:
+    st.session_state.email = None
+if "is_guest" not in st.session_state:
+    st.session_state.is_guest = False
+
+# Show login page if not authenticated
+if not st.session_state.logged_in:
+    st.set_page_config(
+        page_title="ResumeIQ - Login",
+        page_icon="🚀",
+        layout="centered",
+        initial_sidebar_state="collapsed"
+    )
+    show_login_page()
+    st.stop()
 
 st.set_page_config(
     page_title="ResumeIQ - AI Career Platform",
@@ -505,17 +537,31 @@ if "resume_analysis" not in st.session_state:
         "suggestions": "Upload a resume to get personalized suggestions",
         "file_name": "No resume uploaded"
     }
+if "score_history" not in st.session_state:
+    st.session_state.score_history = []
+if "analysis_cache" not in st.session_state:
+    st.session_state.analysis_cache = {}
+if "latest_analysis" not in st.session_state:
+    st.session_state.latest_analysis = {}
+if "latest_file" not in st.session_state:
+    st.session_state.latest_file = "No resume uploaded"
 
 # ===== PAGE FUNCTIONS =====
 
 def show_dashboard():
     st.markdown('<h1>Dashboard Overview</h1>', unsafe_allow_html=True)
 
+    # Check if analysis exists
+    analysis = st.session_state.get("latest_analysis", {})
+
     col1, col2 = st.columns(2, gap="medium")
 
     with col1:
-        score_text = st.session_state.resume_analysis.get('score', '0/10')
-        score_num = int(score_text.split("/")[0]) if "/" in score_text else 0
+        score_text = analysis.get('score', '0/10') if analysis else '0/10'
+        try:
+            score_num = int(score_text.split("/")[0])
+        except:
+            score_num = 0
         st.markdown(f"""
             <div class="card hero-card">
                 <div class="card-title">Resume Score</div>
@@ -525,7 +571,7 @@ def show_dashboard():
         """, unsafe_allow_html=True)
 
     with col2:
-        file_name = st.session_state.resume_analysis.get('file_name', 'No resume uploaded')
+        file_name = st.session_state.get('latest_file', 'No resume uploaded')
         st.markdown(f"""
             <div class="card">
                 <div class="card-title">Latest Resume</div>
@@ -536,103 +582,150 @@ def show_dashboard():
 
     st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
 
-    st.markdown('<h2>Key Metrics</h2>', unsafe_allow_html=True)
+    if analysis:
+        st.markdown('<h2>Latest Analysis Details</h2>', unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns(3, gap="medium")
+        col1, col2, col3 = st.columns(3, gap="medium")
 
-    with col1:
-        st.markdown("""
-            <div class="card">
-                <div class="card-title">Resume Score</div>
-                <div class="card-value">92</div>
-                <div class="card-desc">+5 from last review</div>
-            </div>
-        """, unsafe_allow_html=True)
+        with col1:
+            skills = analysis.get("matched_skills", [])
+            skills_text = "<br>".join([f"• {s.strip('•') if isinstance(s, str) else s}" for s in (skills if isinstance(skills, list) else [skills])[:3]])
+            st.markdown(f'<div class="card"><div class="card-title">✓ Skills Found</div><div style="color: #D1D5DB;">{skills_text}</div></div>', unsafe_allow_html=True)
 
-    with col2:
-        st.markdown("""
-            <div class="card">
-                <div class="card-title">Job Match</div>
-                <div class="card-value">87%</div>
-                <div class="card-desc">8 positions matched</div>
-            </div>
-        """, unsafe_allow_html=True)
+        with col2:
+            missing = analysis.get("missing_skills", [])
+            missing_text = "<br>".join([f"• {m.strip('•') if isinstance(m, str) else m}" for m in (missing if isinstance(missing, list) else [missing])[:3]])
+            st.markdown(f'<div class="card"><div class="card-title">⚠️ Skills Missing</div><div style="color: #D1D5DB;">{missing_text}</div></div>', unsafe_allow_html=True)
 
-    with col3:
-        st.markdown("""
-            <div class="card">
-                <div class="card-title">Interview Score</div>
-                <div class="card-value">85</div>
-                <div class="card-desc">Last session: Good</div>
-            </div>
-        """, unsafe_allow_html=True)
+        with col3:
+            priority = analysis.get("priority_skills", [])
+            if isinstance(priority, list):
+                priority_text = "<br>".join([f"• {p}" for p in priority[:3]])
+            else:
+                priority_text = f"• {priority}"
+            st.markdown(f'<div class="card"><div class="card-title">🎯 Priority Focus</div><div style="color: #D1D5DB;">{priority_text}</div></div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
 
-    st.markdown('<h2>Performance Trends</h2>', unsafe_allow_html=True)
+        col1, col2 = st.columns(2, gap="medium")
 
-    col1, col2, col3, col4 = st.columns(4, gap="medium")
+        with col1:
+            strengths = analysis.get("strengths", [])
+            s_text = "<br>".join([f"• {s.strip('•') if isinstance(s, str) else s}" for s in (strengths if isinstance(strengths, list) else [strengths])[:3]])
+            st.markdown(f'<div class="card"><div class="card-title">💪 Strengths</div><div style="color: #D1D5DB;">{s_text}</div></div>', unsafe_allow_html=True)
 
-    with col1:
-        st.markdown("""
-            <div class="card">
-                <div class="card-title">Applications</div>
-                <div class="card-value">24</div>
-                <div class="card-desc">+8 this month</div>
-            </div>
-        """, unsafe_allow_html=True)
+        with col2:
+            weaknesses = analysis.get("weaknesses", [])
+            w_text = "<br>".join([f"• {w.strip('•') if isinstance(w, str) else w}" for w in (weaknesses if isinstance(weaknesses, list) else [weaknesses])[:3]])
+            st.markdown(f'<div class="card"><div class="card-title">📋 Weaknesses</div><div style="color: #D1D5DB;">{w_text}</div></div>', unsafe_allow_html=True)
 
-    with col2:
-        st.markdown("""
-            <div class="card">
-                <div class="card-title">Interviews</div>
-                <div class="card-value">12</div>
-                <div class="card-desc">+4 this month</div>
-            </div>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
 
-    with col3:
-        st.markdown("""
-            <div class="card">
-                <div class="card-title">Offers</div>
-                <div class="card-value">3</div>
-                <div class="card-desc">+1 this month</div>
-            </div>
-        """, unsafe_allow_html=True)
+        roadmap = analysis.get("learning_roadmap", {})
+        st.markdown('<h2>📚 Recommended Path</h2>', unsafe_allow_html=True)
+        cols = st.columns(3, gap="medium")
 
-    with col4:
-        st.markdown("""
-            <div class="card">
-                <div class="card-title">Success Rate</div>
-                <div class="card-value">25%</div>
-                <div class="card-desc">↑ 5% trending</div>
-            </div>
-        """, unsafe_allow_html=True)
+        with cols[0]:
+            st.markdown(f"""<div class="card">
+                <div class="card-title">Level 1: Beginner</div>
+                <div style="color: #D1D5DB; font-size: 0.9rem;">{roadmap.get('beginner', 'Start with basics')}</div>
+            </div>""", unsafe_allow_html=True)
+
+        with cols[1]:
+            st.markdown(f"""<div class="card">
+                <div class="card-title">Level 2: Intermediate</div>
+                <div style="color: #D1D5DB; font-size: 0.9rem;">{roadmap.get('intermediate', 'Build skills')}</div>
+            </div>""", unsafe_allow_html=True)
+
+        with cols[2]:
+            st.markdown(f"""<div class="card">
+                <div class="card-title">Level 3: Advanced</div>
+                <div style="color: #D1D5DB; font-size: 0.9rem;">{roadmap.get('advanced', 'Master & lead')}</div>
+            </div>""", unsafe_allow_html=True)
 
     st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
 
-    st.markdown('<h2>Recent Activity</h2>', unsafe_allow_html=True)
+    st.markdown('<h2>Score History</h2>', unsafe_allow_html=True)
+    if len(st.session_state.score_history) > 0:
+        history_html = " → ".join([str(s) for s in st.session_state.score_history])
+        st.markdown(f'<div class="card"><div style="color: #D1D5DB; font-size: 1.1rem;">Progress: {history_html}</div></div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="card"><div style="color: #9CA3AF;">📤 Upload resume to see score history</div></div>', unsafe_allow_html=True)
 
-    score_text = st.session_state.resume_analysis.get('score', '0/10')
-    activities = [
-        (f"Resume uploaded: {st.session_state.resume_analysis.get('file_name', 'No resume')}", f"Analysis score: {score_text}", "Just now"),
-        ("Resume evaluated", "Get detailed feedback on strengths and weaknesses", "Latest"),
-        ("Job match completed", "Compare your resume against job descriptions", "Available"),
-        ("Interview practice", "Practice with AI-generated interview questions", "Ready"),
-    ]
+    if analysis:
+        st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
+        st.markdown('<h2>Quick Stats</h2>', unsafe_allow_html=True)
 
-    for title, desc, time in activities:
+        col1, col2, col3 = st.columns(3, gap="medium")
+
+        with col1:
+            skills = analysis.get("matched_skills", [])
+            skill_count = len(skills) if isinstance(skills, list) else 1
+            st.markdown(f"""
+                <div class="card">
+                    <div class="card-title">Skills Detected</div>
+                    <div class="card-value">{skill_count}</div>
+                    <div class="card-desc">From your resume</div>
+                </div>
+            """, unsafe_allow_html=True)
+
+        with col2:
+            missing = analysis.get("missing_skills", [])
+            missing_count = len(missing) if isinstance(missing, list) else 1
+            st.markdown(f"""
+                <div class="card">
+                    <div class="card-title">Skills to Develop</div>
+                    <div class="card-value">{missing_count}</div>
+                    <div class="card-desc">Priority areas</div>
+                </div>
+            """, unsafe_allow_html=True)
+
+        with col3:
+            score_text = analysis.get('score', '5/10')
+            try:
+                score = int(score_text.split("/")[0])
+            except:
+                score = 5
+            st.markdown(f"""
+                <div class="card">
+                    <div class="card-title">Latest Score</div>
+                    <div class="card-value">{score}</div>
+                    <div class="card-desc">/10 - Updated</div>
+                </div>
+            """, unsafe_allow_html=True)
+
+    st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
+
+    if analysis:
+        st.markdown('<h2>Next Steps</h2>', unsafe_allow_html=True)
+
+        suggestions = analysis.get("strengths", [])
+        if isinstance(suggestions, list):
+            suggestions_text = "<br>".join([f"✓ {s.strip('•')}" for s in suggestions[:2]])
+        else:
+            suggestions_text = f"✓ {suggestions.strip('•')}"
+
         st.markdown(f"""
             <div class="card" style="margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <div style="font-weight: 600; color: #ffffff; margin-bottom: 4px;">{title}</div>
-                        <div style="font-size: 0.9rem; color: #9CA3AF;">{desc}</div>
-                    </div>
-                    <div style="font-size: 0.85rem; color: #6B7280;">{time}</div>
-                </div>
+                <div style="font-weight: 600; color: #4ADE80; margin-bottom: 8px;">Strengths to Highlight</div>
+                <div style="font-size: 0.9rem; color: #D1D5DB;">{suggestions_text}</div>
             </div>
         """, unsafe_allow_html=True)
+
+        weaknesses = analysis.get("weaknesses", [])
+        if isinstance(weaknesses, list):
+            weaknesses_text = "<br>".join([f"→ {w.strip('•')}" for w in weaknesses[:2]])
+        else:
+            weaknesses_text = f"→ {weaknesses.strip('•')}"
+
+        st.markdown(f"""
+            <div class="card">
+                <div style="font-weight: 600; color: #FBBF24; margin-bottom: 8px;">Areas to Improve</div>
+                <div style="font-size: 0.9rem; color: #D1D5DB;">{weaknesses_text}</div>
+            </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="card"><div style="color: #9CA3AF; text-align: center;">📤 Upload a resume to see recommendations</div></div>', unsafe_allow_html=True)
 
 def show_resume_review():
     st.markdown('<h1>📄 Resume Review</h1>', unsafe_allow_html=True)
@@ -664,19 +757,55 @@ def show_resume_review():
                     analysis = analyze_resume(resume_text, target_role)
 
                 # Store analysis in session state
-                st.session_state.resume_analysis = {
+                analysis_data = {
                     "score": analysis.get("score", "0/10"),
                     "strengths": analysis.get("strengths", ""),
                     "weaknesses": analysis.get("weaknesses", ""),
                     "suggestions": analysis.get("suggestions", ""),
                     "file_name": uploaded_file.name
                 }
+                st.session_state.resume_analysis = analysis_data
+                st.session_state.latest_analysis = analysis_data
+                st.session_state.latest_file = uploaded_file.name
+
+                # Save to database for progress tracking
+                if st.session_state.user_id and st.session_state.user_id != "guest":
+                    try:
+                        score_num = int(analysis.get("score", "0/10").split("/")[0])
+                        add_score_record(
+                            st.session_state.user_id,
+                            score_num,
+                            target_role or "General",
+                            uploaded_file.name,
+                            resume_text,
+                            analysis
+                        )
+                    except Exception as e:
+                        st.warning(f"Could not save to progress: {str(e)}")
 
                 st.markdown('<h2>📊 Resume Analysis Report</h2>', unsafe_allow_html=True)
 
                 # Score Card
-                score_text = analysis.get("score", "0/10")
-                score_num = int(score_text.split("/")[0]) if "/" in score_text else 0
+                score_text = analysis.get("score", "ERROR")
+
+                if score_text == "ERROR":
+                    st.error("❌ LLM Analysis Failed - Check terminal for error details")
+                    with st.expander("What went wrong?"):
+                        st.write("""
+                        Possible causes:
+                        1. **Ollama not running** - Start with: `ollama serve`
+                        2. **Model not loaded** - Check: `ollama list`
+                        3. **Network issue** - Restart Ollama
+                        4. **Memory issue** - Close other apps
+
+                        Check terminal output for details!
+                        """)
+                    return
+
+                try:
+                    score_num = int(score_text.split("/")[0]) if "/" in score_text else 0
+                except:
+                    score_num = 0
 
                 st.markdown(f"""
                     <div class="card hero-card">
@@ -688,12 +817,23 @@ def show_resume_review():
 
                 st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
 
+                # DEBUG: Show what we received
+                with st.expander("🔍 Debug - Raw Analysis Data"):
+                    st.code(f"Score: {repr(analysis.get('score', 'MISSING'))}\nStrengths: {repr(analysis.get('strengths', 'MISSING')[:150])}\nWeaknesses: {repr(analysis.get('weaknesses', 'MISSING')[:150])}")
+
+                st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
+
                 # Strengths & Weaknesses
                 col1, col2 = st.columns(2, gap="medium")
 
                 with col1:
-                    strengths = analysis.get("strengths", "").split("\n")
-                    strengths_html = "<br>".join([s.strip() for s in strengths if s.strip()])
+                    strengths_raw = analysis.get("strengths", "")
+                    if strengths_raw and "<" not in strengths_raw:
+                        strengths = strengths_raw.split("\n")
+                        strengths_html = "<br>".join([s.strip() for s in strengths if s.strip()])
+                    else:
+                        strengths_html = "• Well-structured content<br>• Clear organization<br>• Professional presentation"
+
                     st.markdown(f"""
                         <div class="card">
                             <div class="skills-header" style="margin-bottom: 16px;">
@@ -707,8 +847,13 @@ def show_resume_review():
                     """, unsafe_allow_html=True)
 
                 with col2:
-                    weaknesses = analysis.get("weaknesses", "").split("\n")
-                    weaknesses_html = "<br>".join([w.strip() for w in weaknesses if w.strip()])
+                    weaknesses_raw = analysis.get("weaknesses", "")
+                    if weaknesses_raw and "<" not in weaknesses_raw:
+                        weaknesses = weaknesses_raw.split("\n")
+                        weaknesses_html = "<br>".join([w.strip() for w in weaknesses if w.strip()])
+                    else:
+                        weaknesses_html = "• Add more quantifiable metrics<br>• Include technical skills<br>• Strengthen action verbs"
+
                     st.markdown(f"""
                         <div class="card">
                             <div class="skills-header" style="margin-bottom: 16px; color: #FBBF24;">
@@ -725,8 +870,13 @@ def show_resume_review():
 
                 # Suggestions
                 st.markdown('<h2>💡 Recommendations</h2>', unsafe_allow_html=True)
-                suggestions = analysis.get("suggestions", "").split("\n")
-                suggestions_text = "<br>".join([s.strip() for s in suggestions if s.strip()])
+                suggestions_raw = analysis.get("suggestions", "")
+                if suggestions_raw and "<" not in suggestions_raw:
+                    suggestions = suggestions_raw.split("\n")
+                    suggestions_text = "<br>".join([s.strip() for s in suggestions if s.strip()])
+                else:
+                    suggestions_text = "• Quantify your achievements with metrics<br>• Add technical skills section<br>• Use stronger action verbs<br>• Improve formatting consistency"
+
                 st.markdown(f"""
                     <div class="card">
                         <div style="color: #D1D5DB; line-height: 1.8;">
@@ -734,6 +884,58 @@ def show_resume_review():
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
+
+                st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
+
+                # Export section
+                st.markdown('<h2>📥 Export Resume</h2>', unsafe_allow_html=True)
+
+                col1, col2, col3, col4 = st.columns(4)
+
+                with col1:
+                    template = st.selectbox("Template", ["Modern", "Classic", "Minimal"], key="export_template")
+
+                with col2:
+                    if st.button("📄 PDF", use_container_width=True, key="export_pdf"):
+                        try:
+                            pdf_data = generate_pdf_resume(resume_text, template.lower())
+                            st.download_button(
+                                label="Download PDF",
+                                data=pdf_data,
+                                file_name="resume.pdf",
+                                mime="application/pdf",
+                                key="download_pdf_button"
+                            )
+                        except Exception as e:
+                            st.error(f"Error generating PDF: {str(e)}")
+
+                with col3:
+                    if st.button("📝 DOCX", use_container_width=True, key="export_docx"):
+                        try:
+                            docx_data = generate_docx_resume(resume_text)
+                            st.download_button(
+                                label="Download DOCX",
+                                data=docx_data,
+                                file_name="resume.docx",
+                                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                key="download_docx_button"
+                            )
+                        except Exception as e:
+                            st.error(f"Error generating DOCX: {str(e)}")
+
+                with col4:
+                    if st.button("📊 CSV", use_container_width=True, key="export_csv"):
+                        try:
+                            csv_data = generate_csv_export(st.session_state.latest_analysis)
+                            st.download_button(
+                                label="Download CSV",
+                                data=csv_data,
+                                file_name="analysis.csv",
+                                mime="text/csv",
+                                key="download_csv_button"
+                            )
+                        except Exception as e:
+                            st.error(f"Error generating CSV: {str(e)}")
 
                 st.success("✅ Resume analysis complete!")
 
@@ -892,9 +1094,20 @@ def show_learning():
             # If resume provided, show AI-powered analysis first
             if resume_text:
                 st.markdown('<h2>🤖 AI-Powered Personalized Roadmap</h2>', unsafe_allow_html=True)
-                with st.spinner("Generating personalized roadmap based on your resume..."):
+                with st.spinner("Generating personalized roadmap..."):
                     try:
-                        roadmap = generate_career_roadmap(target_role, resume_text)
+                        roadmap = generate_career_roadmap_fast(target_role, resume_text)
+
+                        # Display strong skills from resume
+                        if roadmap.get("strong_skills"):
+                            st.markdown('<h3>💪 Skills Found in Your Resume</h3>', unsafe_allow_html=True)
+                            st.markdown(f"""
+                                <div class="card">
+                                    <div style="color: #D1D5DB; line-height: 1.8;">
+                                        {roadmap.get("strong_skills", "").replace(chr(10), "<br>")}
+                                    </div>
+                                </div>
+                            """, unsafe_allow_html=True)
 
                         # Display missing skills
                         if roadmap.get("missing_skills"):
@@ -1115,17 +1328,214 @@ def show_learning():
             </div>
         """, unsafe_allow_html=True)
 
+def show_advanced_analysis():
+    """Advanced AI analysis combining skills, ATS, feedback, roadmap in ONE call"""
+    st.markdown('<h1>🚀 Advanced Resume Analysis</h1>', unsafe_allow_html=True)
+
+    st.markdown("""
+        <div class="card" style="margin-bottom: 20px;">
+            <div class="card-title">Unified Deep Dive</div>
+            <div style="color: #D1D5DB; padding: 10px 0;">
+                Get comprehensive analysis: skills, ATS check, feedback, and learning path in one scan.
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2, gap="medium")
+
+    with col1:
+        uploaded_file = st.file_uploader("Choose PDF resume", type="pdf", key="advanced_analysis_file")
+
+    with col2:
+        target_role = st.text_input("Target role (e.g., Data Analyst, Software Engineer)",
+                                   placeholder="Leave empty for general analysis")
+
+    if uploaded_file is not None and st.button("🔍 Run Full Analysis"):
+        try:
+            resume_text = extract_text(uploaded_file)
+            cache_key = get_cache_key(resume_text, target_role or "general")
+
+            # Check cache first
+            if cache_key in st.session_state.analysis_cache:
+                analysis = st.session_state.analysis_cache[cache_key]
+                st.info("📦 Loaded from cache (faster!)")
+            else:
+                with st.spinner("🤖 Analyzing your resume..."):
+                    analysis = generate_unified_analysis(resume_text, target_role or "General Professional")
+                    st.session_state.analysis_cache[cache_key] = analysis
+
+            # Extract score for history
+            score_str = analysis.get("score", "0/10")
+            try:
+                score_num = int(score_str.split("/")[0])
+            except:
+                score_num = 0
+
+            # Track last 3 scores
+            st.session_state.score_history.append(score_num)
+            st.session_state.score_history = st.session_state.score_history[-3:]
+
+            # Update dashboard data
+            st.session_state.latest_analysis = analysis
+            st.session_state.latest_file = uploaded_file.name
+
+            # Display results
+            st.markdown('<h2>📊 Analysis Results</h2>', unsafe_allow_html=True)
+
+            # Score card
+            st.markdown(f"""
+                <div class="card hero-card">
+                    <div class="card-title">Resume Score</div>
+                    <div class="card-value">{score_num}</div>
+                    <div class="card-desc">/10 - {'Excellent' if score_num >= 8 else 'Good' if score_num >= 6 else 'Needs Work'}</div>
+                </div>
+            """, unsafe_allow_html=True)
+
+            st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
+
+            # Skills section
+            col1, col2, col3 = st.columns(3, gap="medium")
+
+            with col1:
+                st.markdown('<h3>✓ Matched Skills</h3>', unsafe_allow_html=True)
+                skills_html = "<br>".join([f"• {s}" for s in analysis.get("matched_skills", [])[:3]])
+                st.markdown(f'<div class="card"><div style="color: #D1D5DB;">{skills_html}</div></div>',
+                           unsafe_allow_html=True)
+
+            with col2:
+                st.markdown('<h3>⚠️ Missing Skills</h3>', unsafe_allow_html=True)
+                missing_html = "<br>".join([f"• {s}" for s in analysis.get("missing_skills", [])[:3]])
+                st.markdown(f'<div class="card"><div style="color: #D1D5DB;">{missing_html}</div></div>',
+                           unsafe_allow_html=True)
+
+            with col3:
+                st.markdown('<h3>🎯 Priority Skills</h3>', unsafe_allow_html=True)
+                priority_html = "<br>".join([f"• {s}" for s in analysis.get("priority_skills", [])[:3]])
+                st.markdown(f'<div class="card"><div style="color: #D1D5DB;">{priority_html}</div></div>',
+                           unsafe_allow_html=True)
+
+            st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
+
+            # Strengths & Weaknesses
+            col1, col2 = st.columns(2, gap="medium")
+
+            with col1:
+                st.markdown('<h3>💪 Strengths</h3>', unsafe_allow_html=True)
+                strengths_html = "<br>".join([f"• {s}" for s in analysis.get("strengths", [])])
+                st.markdown(f'<div class="card"><div style="color: #D1D5DB;">{strengths_html}</div></div>',
+                           unsafe_allow_html=True)
+
+            with col2:
+                st.markdown('<h3>📋 Weaknesses</h3>', unsafe_allow_html=True)
+                weaknesses_html = "<br>".join([f"• {s}" for s in analysis.get("weaknesses", [])])
+                st.markdown(f'<div class="card"><div style="color: #D1D5DB;">{weaknesses_html}</div></div>',
+                           unsafe_allow_html=True)
+
+            st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
+
+            # ATS Check
+            st.markdown('<h2>🤖 ATS Compatibility</h2>', unsafe_allow_html=True)
+            ats_checks = analysis.get("ats_checks", {})
+            ats_cols = st.columns(3, gap="medium")
+
+            ats_items = [
+                ("Keywords", ats_checks.get("keywords", "Unknown")),
+                ("Action Verbs", ats_checks.get("verbs", "Unknown")),
+                ("Clarity", ats_checks.get("clarity", "Unknown"))
+            ]
+
+            for i, (label, status) in enumerate(ats_items):
+                with ats_cols[i]:
+                    status_color = "#4ADE80" if status == "Pass" else "#EF4444"
+                    st.markdown(f"""
+                        <div class="card">
+                            <div class="card-title">{label}</div>
+                            <div style="color: {status_color}; font-weight: 700; font-size: 1.2rem;">{status}</div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+            st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
+
+            # Improved Bullet
+            improved = analysis.get("improved_bullet", {})
+            if improved.get("original"):
+                st.markdown('<h2>💡 Resume Enhancement</h2>', unsafe_allow_html=True)
+                st.markdown(f"""
+                    <div class="comparison-row">
+                        <div>
+                            <div class="comparison-header"><span class="icon-original">❌</span> Original</div>
+                            <div class="comparison-text">{improved.get('original', '')}</div>
+                        </div>
+                        <div>
+                            <div class="comparison-header"><span class="icon-enhanced">✓</span> Enhanced</div>
+                            <div class="comparison-text">{improved.get('improved', '')}</div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+
+            st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
+
+            # Learning Roadmap
+            roadmap = analysis.get("learning_roadmap", {})
+            if roadmap:
+                st.markdown('<h2>📚 Learning Roadmap</h2>', unsafe_allow_html=True)
+                roadmap_cols = st.columns(3, gap="medium")
+
+                with roadmap_cols[0]:
+                    st.markdown(f"""
+                        <div class="card">
+                            <div class="card-title">Beginner</div>
+                            <div style="color: #D1D5DB; font-size: 0.9rem;">{roadmap.get('beginner', 'N/A')}</div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                with roadmap_cols[1]:
+                    st.markdown(f"""
+                        <div class="card">
+                            <div class="card-title">Intermediate</div>
+                            <div style="color: #D1D5DB; font-size: 0.9rem;">{roadmap.get('intermediate', 'N/A')}</div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                with roadmap_cols[2]:
+                    st.markdown(f"""
+                        <div class="card">
+                            <div class="card-title">Advanced</div>
+                            <div style="color: #D1D5DB; font-size: 0.9rem;">{roadmap.get('advanced', 'N/A')}</div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+            st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
+
+            # Score History
+            if len(st.session_state.score_history) > 1:
+                st.markdown('<h2>📈 Score History</h2>', unsafe_allow_html=True)
+                history_html = " → ".join([str(s) for s in st.session_state.score_history])
+                st.markdown(f'<div class="card"><div style="color: #D1D5DB; font-size: 1.1rem;">{history_html}</div></div>',
+                           unsafe_allow_html=True)
+
+            st.success("✅ Analysis complete! Results cached for speed.")
+
+        except Exception as e:
+            st.error(f"❌ Error: {str(e)}")
+
+    else:
+        st.info("📤 Upload a resume and enter target role to begin analysis.")
+
 # ===== SIDEBAR NAVIGATION =====
 with st.sidebar:
     st.markdown("### 🧭 Navigation")
 
     nav_items = [
         ("📊 Dashboard", "Dashboard"),
+        ("📊 Progress", "Progress"),
         ("📄 Resume Review", "Resume"),
+        ("🚀 Advanced Analysis", "Advanced"),
         ("🎤 Interview", "Interview"),
         ("🎯 Job Match", "JobMatch"),
         ("✍️ Rewriter", "Rewriter"),
-        ("📈 Learning", "Learning")
+        ("💰 Salary Guide", "Salary"),
+        ("📈 Career Advisor", "Learning")
     ]
 
     for label, key in nav_items:
@@ -1135,14 +1545,23 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("### 👤 Profile")
-    st.markdown("""
+
+    # Display user info
+    user_email = st.session_state.get("email", "Guest")
+    user_display = "👤 Guest" if st.session_state.get("is_guest") else f"👤 {user_email.split('@')[0]}"
+
+    st.markdown(f"""
         <div style="background-color: #1F2937; padding: 12px; border-radius: 8px; text-align: center;">
-            <div style="font-size: 1.5rem; color: #7C3AED; margin-bottom: 8px;">●</div>
-            <div style="font-weight: 600; color: #ffffff;">Omkar</div>
-            <div style="font-size: 0.85rem; color: #9CA3AF;">Premium Plan</div>
-            <div style="font-size: 0.75rem; color: #6B7280; margin-top: 4px;">Active • Pro Member</div>
+            <div style="font-size: 1.2rem; margin-bottom: 8px;">{user_display}</div>
+            <div style="font-size: 0.75rem; color: #9CA3AF;">{user_email}</div>
         </div>
     """, unsafe_allow_html=True)
+
+    # Logout button
+    if st.button("🚪 Logout", use_container_width=True, key="sidebar_logout"):
+        from utils.auth import logout_user
+        logout_user()
+        st.rerun()
 
 # ===== STEP 3: OPEN MAIN WRAPPER =====
 st.markdown('<div class="main-wrapper">', unsafe_allow_html=True)
@@ -1150,8 +1569,12 @@ st.markdown('<div class="main-wrapper">', unsafe_allow_html=True)
 # ===== STEP 4: PAGE ROUTING =====
 if st.session_state.page == "Dashboard":
     show_dashboard()
+elif st.session_state.page == "Progress":
+    show_progress_dashboard()
 elif st.session_state.page == "Resume":
     show_resume_review()
+elif st.session_state.page == "Advanced":
+    show_advanced_analysis()
 elif st.session_state.page == "Interview":
     show_interview()
 elif st.session_state.page == "JobMatch":
@@ -1160,6 +1583,8 @@ elif st.session_state.page == "Rewriter":
     show_rewriter()
 elif st.session_state.page == "Learning":
     show_learning()
+elif st.session_state.page == "Salary":
+    show_salary_guide()
 
 # ===== STEP 5: CLOSE MAIN WRAPPER =====
 st.markdown('</div>', unsafe_allow_html=True)

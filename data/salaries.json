@@ -1,0 +1,242 @@
+{
+  "data_analyst": {
+    "entry_level": {
+      "min": 50000,
+      "avg": 60000,
+      "max": 70000
+    },
+    "mid_level": {
+      "min": 70000,
+      "avg": 85000,
+      "max": 100000
+    },
+    "senior": {
+      "min": 100000,
+      "avg": 125000,
+      "max": 150000
+    },
+    "negotiation_tips": [
+      "Research industry benchmarks on Glassdoor and Levels.fyi before negotiating",
+      "Emphasize your technical skills: SQL optimization, complex queries, dashboard creation",
+      "Highlight cost savings from data-driven decisions you've made",
+      "Strong Power BI or Tableau experience can add 5-10% to your offer",
+      "Negotiation is normal - most companies expect it, aim for 5-15% increase"
+    ]
+  },
+  "software_engineer": {
+    "entry_level": {
+      "min": 70000,
+      "avg": 85000,
+      "max": 100000
+    },
+    "mid_level": {
+      "min": 100000,
+      "avg": 130000,
+      "max": 160000
+    },
+    "senior": {
+      "min": 150000,
+      "avg": 200000,
+      "max": 250000
+    },
+    "negotiation_tips": [
+      "FAANG companies typically offer higher salaries + equity + signing bonus",
+      "System design expertise can increase offer by 10-20%",
+      "Ask for 10-20% increase if you have multiple competing offers",
+      "Don't reveal previous salary - focus on market rate for your skills",
+      "Negotiate total comp: salary + stock + bonus + benefits"
+    ]
+  },
+  "ml_engineer": {
+    "entry_level": {
+      "min": 80000,
+      "avg": 100000,
+      "max": 120000
+    },
+    "mid_level": {
+      "min": 120000,
+      "avg": 160000,
+      "max": 200000
+    },
+    "senior": {
+      "min": 180000,
+      "avg": 250000,
+      "max": 350000
+    },
+    "negotiation_tips": [
+      "Deep learning and computer vision skills command highest premiums",
+      "ML Infrastructure and MLOps experience increasingly valuable",
+      "Academic background (PhD) can add 15-25% to offers",
+      "Kaggle competition wins or published papers strengthen negotiating position",
+      "Remote-first ML roles typically offer 20-30% premium vs on-site"
+    ]
+  },
+  "frontend_developer": {
+    "entry_level": {
+      "min": 60000,
+      "avg": 75000,
+      "max": 90000
+    },
+    "mid_level": {
+      "min": 90000,
+      "avg": 120000,
+      "max": 150000
+    },
+    "senior": {
+      "min": 140000,
+      "avg": 180000,
+      "max": 230000
+    },
+    "negotiation_tips": [
+      "React expertise (especially with Next.js) is most in-demand",
+      "Web performance optimization skills worth 5-10% premium",
+      "Portfolio of deployed projects is crucial for negotiating",
+      "Design system experience can add value, ask 10% more",
+      "TypeScript fluency increasing in demand, ask for 5% premium"
+    ]
+  },
+  "backend_developer": {
+    "entry_level": {
+      "min": 65000,
+      "avg": 80000,
+      "max": 95000
+    },
+    "mid_level": {
+      "min": 95000,
+      "avg": 125000,
+      "max": 160000
+    },
+    "senior": {
+      "min": 150000,
+      "avg": 190000,
+      "max": 250000
+    },
+    "negotiation_tips": [
+      "Database optimization and scaling experience highly valued",
+      "API design and REST/GraphQL expertise worth 5-10% premium",
+      "Microservices and distributed systems knowledge adds significant value",
+      "Cloud infrastructure (AWS, GCP, Azure) adds 10-15% to offer",
+      "Leadership of backend team can push salary to senior level"
+    ]
+  },
+  "devops_engineer": {
+    "entry_level": {
+      "min": 75000,
+      "avg": 95000,
+      "max": 115000
+    },
+    "mid_level": {
+      "min": 115000,
+      "avg": 150000,
+      "max": 185000
+    },
+    "senior": {
+      "min": 170000,
+      "avg": 220000,
+      "max": 280000
+    },
+    "negotiation_tips": [
+      "Kubernetes expertise commanding premium 15-25% increase",
+      "AWS Solutions Architect certification valuable, ask 5-8% more",
+      "On-call infrastructure management can justify 10% premium",
+      "Terraform/Infrastructure as Code skills increasingly important",
+      "Strong security skills (incident response, hardening) adds 10-15%"
+    ]
+  },
+  "product_manager": {
+    "entry_level": {
+      "min": 70000,
+      "avg": 90000,
+      "max": 110000
+    },
+    "mid_level": {
+      "min": 110000,
+      "avg": 150000,
+      "max": 190000
+    },
+    "senior": {
+      "min": 180000,
+      "avg": 240000,
+      "max": 320000
+    },
+    "negotiation_tips": [
+      "Track record of shipped products is most valuable asset",
+      "B2B PM roles typically pay 10-20% more than B2C",
+      "Data-driven decision making skills worth premium",
+      "Previous exit/IPO experience can justify 20-30% higher offer",
+      "Don't forget: equity can be 20-30% of total comp, negotiate vigorously"
+    ]
+  },
+  "data_scientist": {
+    "entry_level": {
+      "min": 75000,
+      "avg": 95000,
+      "max": 115000
+    },
+    "mid_level": {
+      "min": 115000,
+      "avg": 150000,
+      "max": 185000
+    },
+    "senior": {
+      "min": 170000,
+      "avg": 220000,
+      "max": 290000
+    },
+    "negotiation_tips": [
+      "Production ML experience worth 15-20% premium over research roles",
+      "Published research or kaggle rankings strengthen negotiating position",
+      "Statistical rigor and experimentation design highly valued",
+      "Data strategy expertise can push into PM-level compensation",
+      "Remote data science roles often pay 20-30% premium"
+    ]
+  },
+  "marketing_manager": {
+    "entry_level": {
+      "min": 50000,
+      "avg": 65000,
+      "max": 80000
+    },
+    "mid_level": {
+      "min": 80000,
+      "avg": 110000,
+      "max": 140000
+    },
+    "senior": {
+      "min": 130000,
+      "avg": 170000,
+      "max": 220000
+    },
+    "negotiation_tips": [
+      "Revenue impact of your campaigns is key talking point",
+      "B2B marketing typically pays 10-15% more than B2C",
+      "Growth hacking and startup scaling experience valued highly",
+      "Team management experience justifies 15-25% increase",
+      "Industry expertise (healthcare, fintech) commands premium"
+    ]
+  },
+  "sales_engineer": {
+    "entry_level": {
+      "min": 70000,
+      "avg": 90000,
+      "max": 110000
+    },
+    "mid_level": {
+      "min": 110000,
+      "avg": 150000,
+      "max": 190000
+    },
+    "senior": {
+      "min": 170000,
+      "avg": 230000,
+      "max": 300000
+    },
+    "negotiation_tips": [
+      "Commission structure is key - negotiate for 10-20% of revenue",
+      "Enterprise SaaS roles pay 20-30% more than SMB",
+      "Quota attainment track record is most powerful negotiating tool",
+      "Technical certifications add credibility, worth 5-10% premium",
+      "Territory size and partner network valuable for higher territory"
+    ]
+  }
+}

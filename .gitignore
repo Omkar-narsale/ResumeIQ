@@ -32,3 +32,6 @@ env/
 .DS_Store
 *.streamlit
 .streamlit/
+resumeiq.db
+*.db
+

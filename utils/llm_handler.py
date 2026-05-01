@@ -12,7 +12,7 @@ class LLMHandler:
 
     def __init__(self):
         """Initialize Ollama client"""
-        self.model = "orca-mini"
+        self.model = "orca-mini"  # Use what you have
         self.base_url = "http://localhost:11434/api/generate"
 
         # Test connection
