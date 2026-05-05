@@ -1,6 +1,6 @@
 # 🚀 ResumeIQ - AI-Powered Resume & Career Coach
 
-> Production-ready React + FastAPI application for resume analysis, interview prep, and career guidance powered by **local Ollama LLM** (100% free, no API keys needed!)
+> Production-ready React + FastAPI application for resume analysis, job matching, and career guidance powered by **local Ollama LLM** (100% free, no API keys needed!)
 
 ![React](https://img.shields.io/badge/React-19+-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green)
@@ -12,27 +12,15 @@
 
 ## ✨ Features Overview
 
-ResumeIQ includes **12 comprehensive features** across resume analysis, interview prep, career coaching, and data tracking:
+ResumeIQ includes **5 core features** for resume analysis, job matching, and career development:
 
-### 📄 Core Features (7)
 | Feature | Description |
 |---------|-------------|
-| **📄 Resume Review** | Upload PDF, get AI-powered feedback: score, strengths, weaknesses, suggestions |
-| **🚀 Advanced Analysis** | Unified 8-in-1 analysis: scores, skills, ATS check, roadmap (optimized) |
-| **🎤 Mock Interview** | Role-specific AI interview practice with feedback & example answers |
-| **🎯 Job Match** | Compare resume to job description, show match %, identify gaps |
-| **✍️ Resume Rewriter** | Professionally rewrite resume for target role with stronger verbs & metrics |
-| **📈 Career Advisor** | Personalized 6-month learning paths for 10+ roles |
-| **📊 Dashboard** | Overview with latest scores, skills, trends, and recommendations |
-
-### 💼 New Premium Features (5) ⭐
-| Feature | Description |
-|---------|-------------|
-| **🔐 User Authentication** | Sign up/login with bcrypt security, guest mode, session management |
-| **💾 Data Persistence** | SQLite database stores analyses across sessions, user-isolated data |
-| **📊 Progress Dashboard** | Track score trends over time with Plotly charts, CSV export |
-| **📥 Resume Export** | Download resume as PDF (3 templates), DOCX, or CSV |
-| **💰 Salary Guide** | Market salary data for 10 roles, negotiation tips, salary calculator |
+| **📄 Resume Upload & Analysis** | Upload PDF resume, get AI-powered feedback with score (0-10), strengths, weaknesses, and suggestions |
+| **🎯 Job Matching** | Compare resume to job description, get match score (%), see matched/missing skills and improvement suggestions |
+| **✍️ Resume Rewriter** | Professionally rewrite resume for target role with stronger action verbs, metrics, and ATS optimization |
+| **📈 Learning Paths** | Get personalized 6-month career development roadmap for your target role with structured learning goals |
+| **📊 Dashboard** | Track all analyses, view metrics, and see your resume analysis history |
 
 ---
 
@@ -116,100 +104,60 @@ curl http://localhost:11434/api/tags
 ## 📖 Usage Guide
 
 ### 🔐 Authentication
-1. **Sign Up**: Create account with email & password (bcrypt secured)
-2. **Login**: Access your saved analyses
-3. **Guest Mode**: Use without account (data lost on refresh)
-4. **Profile**: View user info in navbar, logout anytime
+1. **Sign Up**: Create account with email & password
+2. **Login**: Access your saved analyses and dashboard
+3. **Profile**: View account info in navbar
 
-### 📄 Resume Review
-1. Upload PDF resume
-2. (Optional) Enter target role for role-aware analysis
-3. Click "🔍 Analyze Resume"
-4. View results:
-   - **Score** (0-10)
-   - **Strengths** (detected skills & experience)
+### 📄 Resume Upload & Analysis
+1. Go to "📄 Analyzer" page
+2. Upload your PDF resume
+3. (Optional) Enter target job role for role-aware analysis
+4. Click "Analyze"
+5. View results:
+   - **Score** (0-10 scale)
+   - **Strengths** (skills & experiences detected)
    - **Weaknesses** (areas to improve)
    - **Suggestions** (actionable recommendations)
-5. **Export Options**:
-   - 📄 **PDF** (3 templates: Modern/Classic/Minimal)
-   - 📝 **DOCX** (editable Word document)
-   - 📊 **CSV** (analysis data for spreadsheets)
 
-### 🚀 Advanced Analysis
-1. Upload resume + enter target role
-2. Click "🔍 Run Full Analysis"
-3. Get all 8 analyses in ~3-4 seconds:
-   - Overall score
-   - Matched & missing skills
-   - Priority skills for role
-   - Strengths & weaknesses
-   - ATS compatibility
-   - Resume improvements
-   - Learning roadmap
-4. Results cached for instant re-analysis
-
-### 🎤 Mock Interview
-1. Enter target job role (e.g., "Software Engineer")
-2. Click "❓ Generate Question"
-3. Answer in text area
-4. Click "✅ Submit Answer"
-5. Receive feedback:
-   - Score (0-10)
-   - Specific feedback
-   - Better answer example
-6. Continue with more questions
-
-### 🎯 Job Match
-1. Upload resume & paste job description
-2. Click "🔍 Analyze Match"
-3. View:
-   - Match score (%)
-   - Matched skills ✅
-   - Missing skills ❌
-   - Specific suggestions
+### 🎯 Job Matching
+1. Go to "🎯 Job Matcher" page
+2. Upload resume
+3. Paste job description
+4. Click "Analyze Match"
+5. View:
+   - **Match Score** (percentage)
+   - **Matched Skills** ✅ (skills you have)
+   - **Missing Skills** ❌ (skills needed)
+   - **Improvement Tips** (how to strengthen application)
 
 ### ✍️ Resume Rewriter
-1. Upload resume
-2. (Optional) Enter target role
-3. Click "✍️ Rewrite Resume"
-4. Get professionally improved version with:
+1. Go to "✍️ Rewriter" page
+2. Upload your resume
+3. Enter target role (optional)
+4. Click "Rewrite Resume"
+5. Get improved version with:
    - Stronger action verbs
    - Quantified achievements
-   - ATS optimization
-   - Better formatting
+   - Better ATS optimization
+   - Professional formatting
 
-### 📈 Career Advisor
-1. Enter target role (e.g., "Data Analyst")
-2. (Optional) Upload resume for personalized tips
-3. Click "🎯 Generate Learning Path"
+### 📈 Learning Paths
+1. Go to "📈 Learning" page
+2. Enter your target role
+3. Click "Generate Learning Path"
 4. Get 6-month roadmap:
    - **Months 1-2**: Foundation skills
    - **Months 3-4**: Intermediate mastery
    - **Months 5-6**: Advanced level
-5. Includes role-specific negotiation tips
+5. Includes resources and milestones for each phase
 
-### 📊 Progress Dashboard
-1. Click "📊 Progress" in sidebar
-2. View your metrics:
-   - **Trend Chart**: Score progression over time
-   - **Statistics**: Total analyses, avg score, best score
-   - **Improvement %**: Progress from first to latest
-   - **Analysis History**: Table of all reviews
-   - **Score Distribution**: Histogram of scores
-3. **Export**: Download history as CSV
-
-### 💰 Salary Guide
-1. Click "💰 Salary Guide" in sidebar
-2. Select role & experience level:
-   - Entry Level (0-2 years)
-   - Mid Level (2-5 years)
-   - Senior (5+ years)
-3. View:
-   - **Salary Range**: Min/avg/max for selected level
-   - **Progression Chart**: How salary grows by level
-   - **Market Trends**: Top 10 highest-paying roles
-   - **Negotiation Tips**: Role-specific strategies
-4. **Salary Calculator**: Enter current salary to see potential increase
+### 📊 Dashboard
+1. Go to "📊 Dashboard" page after logging in
+2. View:
+   - **Analysis History**: List of all resumes analyzed
+   - **Scores**: Latest and average analysis scores
+   - **Trends**: How your resumes are improving
+   - **Job Matches**: Recent job matching results
 
 ---
 
@@ -238,6 +186,12 @@ ResumeIQ/
 │   │   ├── src/
 │   │   │   ├── components/          # Reusable React components
 │   │   │   ├── pages/               # Page components
+│   │   │   │   ├── Analyzer.jsx     # Resume analysis
+│   │   │   │   ├── Dashboard.jsx    # Analysis dashboard
+│   │   │   │   ├── JobMatcher.jsx   # Job matching
+│   │   │   │   ├── Learning.jsx     # Learning paths
+│   │   │   │   ├── Rewriter.jsx     # Resume rewriter
+│   │   │   │   └── Login.jsx        # Authentication
 │   │   │   ├── context/             # Auth & Resume context
 │   │   │   ├── hooks/               # Custom React hooks
 │   │   │   ├── styles/              # Global CSS & Tailwind
@@ -257,9 +211,8 @@ ResumeIQ/
 │   │
 │   └── start.bat                    # Windows startup script
 │
-├── app.py                           # Legacy Streamlit (deprecated)
 ├── README.md                        # This file
-└── requirements.txt                 # Legacy requirements
+└── RESUME_ANALYZER_DOCS.md         # Technical documentation
 ```
 
 ---
@@ -268,7 +221,7 @@ ResumeIQ/
 
 ### Frontend
 - **React 19** - UI framework with hooks & context API
-- **Vite** - Lightning-fast build tool
+- **Vite** - Lightning-fast build tool & dev server
 - **Tailwind CSS** - Utility-first styling
 - **Axios** - HTTP client for API calls
 
@@ -280,55 +233,21 @@ ResumeIQ/
 - **SQLite** - Database for persistence
 - **Pydantic** - Data validation & schemas
 
-### Frontend Libraries
-| Library | Purpose |
-|---------|---------|
-| react-router-dom | Client-side routing |
-| axios | HTTP requests to FastAPI |
-| react-context-api | State management (Auth, Resume) |
-| tailwindcss | Responsive styling |
-
-### Backend Libraries
-| Library | Purpose |
-|---------|---------|
-| fastapi | Web framework & API |
-| uvicorn | ASGI server |
-| requests | HTTP client for Ollama |
-| PyPDF2 | PDF text extraction |
-| python-dotenv | Environment variables |
-| sqlalchemy | Database ORM |
-
----
-
-## 📈 Performance & Optimization
-
-| Metric | Value | Details |
-|--------|-------|---------|
-| **Resume Analysis** | 3-4 seconds | Single optimized LLM call |
-| **Resume Parsing** | <100ms | Instant text extraction |
-| **Cache Hit Rate** | 40-60% | Session-based MD5 caching |
-| **API Calls** | 1 per analysis | Optimized from 5+ calls |
-| **Latency Improvement** | 75% faster | vs traditional multi-call approach |
-| **Model Loading** | ~2-3s | First request, then instant |
-
-### Optimization Techniques
-- ✅ Single unified LLM call (8 analyses)
-- ✅ Session caching with MD5 hashing
-- ✅ Local Ollama (no network latency)
-- ✅ Pattern-based pre-analysis (no LLM needed)
-- ✅ Role-aware skill prioritization
-- ✅ Limited resume input (1500 chars) for speed
+### Libraries Used
+| Category | Libraries |
+|----------|-----------|
+| Frontend | react-router-dom, axios, tailwindcss |
+| Backend | fastapi, uvicorn, requests, PyPDF2, sqlalchemy |
 
 ---
 
 ## 🔒 Security Features
 
-- ✅ **Bcrypt Password Hashing**: Industry-standard password security
-- ✅ **Session Isolation**: Users only see their own data
-- ✅ **SQLite Encryption Ready**: Can upgrade to encrypted DB
-- ✅ **Input Validation**: Reject non-resume files
-- ✅ **No API Keys**: All processing local
-- ✅ **Git-Ignored DB**: Database not committed
+- ✅ **Password Security**: Industry-standard hashing (bcrypt)
+- ✅ **Session Management**: User authentication & sessions
+- ✅ **Data Isolation**: Users only see their own data
+- ✅ **Input Validation**: PDF file validation
+- ✅ **No API Keys**: All processing local (Ollama)
 - ✅ **Environment Variables**: Sensitive config in .env
 
 ---
@@ -349,25 +268,26 @@ ResumeIQ/
 - id (INTEGER, PRIMARY KEY)
 - user_id (TEXT, FOREIGN KEY)
 - timestamp (DATETIME)
-- score (INTEGER, 1-10)
+- analysis_type (TEXT) - 'resume_analysis', 'job_match', 'rewrite'
+- score (FLOAT)
 - target_role (TEXT)
 - filename (TEXT)
-- resume_preview (TEXT, 500 chars)
-- full_analysis (TEXT, JSON)
+- content (TEXT, JSON)
 ```
 
 ---
 
 ## ⚙️ Environment Setup
 
-Create `.env` file:
+Create `.env` file in `resumeiq/backend/`:
 ```env
-# Optional: Configure Ollama
+# Ollama configuration
 OLLAMA_URL=http://localhost:11434
 OLLAMA_MODEL=mistral
 
-# Optional: Other settings
+# Optional settings
 DEBUG=false
+DATABASE_URL=sqlite:///./resumeiq.db
 ```
 
 ---
@@ -378,94 +298,86 @@ DEBUG=false
 | Problem | Solution |
 |---------|----------|
 | "Ollama server not running" | Run `ollama serve` in terminal |
-| "Model not found" | Run `ollama pull mistral` |
+| "Model not found" | Run `ollama pull mistral` or `ollama pull neural-chat` |
 | Connection timeout | Verify `http://localhost:11434` is accessible |
-| Slow responses | Close other apps, check RAM usage |
+| Slow responses | Close other apps, check available RAM (8GB+ recommended) |
 
-### PDF Issues
+### PDF Upload Issues
 | Problem | Solution |
 |---------|----------|
-| "Cannot extract text" | Ensure PDF is text-based, not image scan |
-| "Invalid file" | Convert to PDF or use supported format |
-| "Password protected" | Remove password protection from PDF |
+| "Cannot read PDF" | Ensure PDF is text-based, not image scan |
+| "Invalid file" | Only PDF files are supported |
+| "File too large" | Limit resume to 5 pages |
 
 ### Authentication Issues
 | Problem | Solution |
 |---------|----------|
 | "Email already exists" | Use different email or login |
-| "Invalid password" | Password must be 6+ characters |
-| "Data not persisting" | Ensure you're logged in (not guest) |
-| "Database error" | Delete `resumeiq.db` and restart app |
+| "Login failed" | Check email and password |
+| "Data not saving" | Ensure you're logged in |
 
-### Export Issues
+### API Issues
 | Problem | Solution |
 |---------|----------|
-| "PDF download fails" | Reduce resume length to <5 pages |
-| "DOCX not opening" | Update Word or try online Word |
-| "CSV missing data" | Ensure analysis completed first |
+| "Backend not responding" | Verify FastAPI is running on port 8000 |
+| "CORS errors" | Restart both frontend and backend |
+| "Database locked" | Restart the application |
 
 ---
 
 ## 📝 Usage Tips
 
-### For Best Results
-1. **Upload clear PDFs** - Single column layout works best
-2. **Include target role** - Enables role-specific analysis
-3. **Use real experience** - More detailed = better analysis
-4. **Review all suggestions** - Compare before/after
-5. **Practice multiple times** - Interview feedback improves
+### For Best Resume Analysis
+1. **Use clear PDFs** - Single column format works best
+2. **Include target role** - Enables more accurate, role-specific analysis
+3. **Highlight experience** - More detailed experience = better suggestions
+4. **Review suggestions** - Implement recommended improvements
 
-### For Resume Export
-1. Modern template = contemporary tech companies
-2. Classic template = corporate/traditional roles
-3. Minimal template = creative/design-focused roles
+### For Job Matching
+1. **Use full job description** - Copy complete JD for accurate matching
+2. **Include target role** - Helps system understand role level
+3. **Review missing skills** - Prioritize gap-closing
+4. **Save results** - Track multiple job applications
 
-### For Salary Information
-1. Research before negotiating
-2. Consider total compensation (base + bonus + equity)
-3. Location affects salary 10-30%
-4. Industry experience worth 5-15% premium
+### For Resume Rewriting
+1. Start with your best resume version
+2. Specify target role for specific improvements
+3. Compare before/after versions
+4. Implement suggested action verbs
 
 ---
 
-## 🚀 Performance Notes
+## 📈 Performance Notes
 
-- **API Response**: 3-4 seconds (Ollama inference)
+- **Resume Analysis**: 3-4 seconds (Ollama inference)
+- **Job Matching**: 2-3 seconds (skill extraction + LLM)
 - **Frontend Load**: <500ms (React bundle)
 - **Database Queries**: <50ms (SQLite)
 - **Model Loading**: ~2-3s first request, then instant
-- **Cache Hit Rate**: 40-60% (session-based MD5 hashing)
-- **Latency**: 75% faster than multi-call approach
 - **Concurrent Users**: Supported via FastAPI async
 
 ---
 
-## 📈 Future Enhancements
+## 🚀 Future Enhancements (Planned)
 
-### Phase 2 (Planned)
-- 🔍 Job Recommender with real API integration
-- 🎥 Video Interview recording & analysis
-- 📧 Email notifications & reminders
-- 💼 Company research tool
-- 🤝 Mentor matching
-
-### Phase 3 (Wishlist)
-- 📱 Mobile app
-- 👥 Peer comparison (anonymous)
-- 🎓 Course recommendations
-- 📊 Interview success tracking
-- 🌍 Multi-language support
+- 🎤 Mock Interview Practice
+- 💰 Salary Guide by Role & Experience
+- 📥 Resume Export (PDF/DOCX formats)
+- 🔍 Resume Scoring Trends
+- 📧 Email Notifications
+- 🎯 Interview Question Library
+- 💼 Company Research Tool
 
 ---
 
 ## 💡 Contributing
 
 Contributions welcome! Areas for improvement:
-- Additional role templates
-- More languages
-- Better PDF parsing
-- Enhanced styling
+- Additional role templates and career paths
+- Enhanced PDF parsing
+- More interactive UI features
 - Performance optimizations
+- Multi-language support
 
 ---
 
@@ -487,9 +399,9 @@ For issues, questions, or suggestions:
 ## ✨ Credits
 
 Built with ❤️ using:
-- Streamlit for the amazing UI framework
+- React for the modern UI framework
+- FastAPI for the robust backend
 - Ollama for local LLM capabilities
-- Plotly for beautiful visualizations
 - The open-source community
 
 ---
@@ -498,17 +410,19 @@ Built with ❤️ using:
 
 | Metric | Value |
 |--------|-------|
-| Total Features | 12 |
-| Supported Roles | 10+ |
-| API Calls per Analysis | 1 (optimized) |
-| Latency Improvement | 75% faster |
-| Cache Hit Rate | 40-60% |
-| Database Records | Unlimited |
-| Security | Bcrypt + isolation |
-| Cost | 100% FREE |
+| **Total Features** | 5 core features |
+| **Supported Roles** | 10+ |
+| **Analysis Time** | 3-4 seconds |
+| **Security** | Bcrypt + Session isolation |
+| **Cost** | 100% FREE |
+| **Model** | Local Ollama (no API costs) |
+| **Database** | SQLite (local) |
 
 ---
 
-**Start improving your resume and interview skills today! 🚀**
+**Start improving your resume and career today! 🚀**
 
-`streamlit run app.py`
+```bash
+cd resumeiq
+start.bat
+```
