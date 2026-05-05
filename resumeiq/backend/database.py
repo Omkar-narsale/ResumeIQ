@@ -55,6 +55,24 @@ class Resume(Base):
         Index("idx_user_active", "user_id", "is_active"),
     )
 
+class InterviewSession(Base):
+    __tablename__ = "interview_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    role = Column(String)
+    question = Column(String)
+    answer = Column(Text)
+    score = Column(Integer)  # 0-10
+    feedback = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    user = relationship("User")
+
+    __table_args__ = (
+        Index("idx_user_interview", "user_id", "created_at"),
+    )
+
 def get_db():
     db = SessionLocal()
     try:

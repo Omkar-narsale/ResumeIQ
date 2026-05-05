@@ -61,6 +61,16 @@ class InterviewResult(BaseModel):
     questions: List[str]
     tips: List[str]
 
+class InterviewAnswerRequest(BaseModel):
+    role: str
+    question: str
+    answer: str
+
+class InterviewAnswerResult(BaseModel):
+    score: float
+    feedback: str
+    better_answer: str
+
 class RoadmapRequest(BaseModel):
     current_skills: List[str]
     target_role: str

@@ -8,11 +8,11 @@ import bcrypt
 import os
 from dotenv import load_dotenv
 
-from database import get_db, init_db, User, Analysis, Resume
+from database import get_db, init_db, User, Analysis, Resume, InterviewSession
 from models import (
     UserSignup, UserLogin, Token, UserResponse, AnalysisRequest, AnalysisResult,
     RewriteRequest, RewriteResult, MatchRequest, MatchResult, InterviewRequest,
-    InterviewResult, RoadmapRequest, RoadmapResult, AnalysisHistory, ResumeInfo, CurrentResume
+    InterviewResult, InterviewAnswerRequest, InterviewAnswerResult, RoadmapRequest, RoadmapResult, AnalysisHistory, ResumeInfo, CurrentResume
 )
 from extract_text import extract_text_from_pdf
 import inference
@@ -173,6 +173,26 @@ async def interview(req: InterviewRequest, authorization: str = Header(...), db:
         result=result
     )
     db.add(analysis)
+    db.commit()
+
+    return result
+
+@app.post("/api/interview/answer", response_model=InterviewAnswerResult)
+async def evaluate_interview_answer(req: InterviewAnswerRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    result = inference.evaluate_answer(req.role, req.question, req.answer)
+
+    session = InterviewSession(
+        user_id=user.id,
+        role=req.role,
+        question=req.question,
+        answer=req.answer,
+        score=int(result["score"]),
+        feedback=result["feedback"]
+    )
+    db.add(session)
     db.commit()
 
     return result

@@ -460,3 +460,27 @@ def get_role_specific_roadmap(role: str, current_skills: list) -> dict:
         ],
         "resources": ["Online courses", "Documentation", "Projects", "Community"]
     }
+
+def evaluate_answer(role: str, question: str, answer: str) -> dict:
+    """Evaluate interview answer and provide feedback"""
+    prompt = f"""You are an expert interview coach. Evaluate this answer to an interview question.
+
+Role: {role}
+Question: {question}
+Answer: {answer}
+
+Return JSON with:
+- score (0-10, where 10 is excellent)
+- feedback (specific constructive feedback)
+- better_answer (example of a better answer to the same question)
+
+JSON Response:"""
+
+    response = infer(prompt, max_tokens=400)
+    result = parse_json_response(response)
+
+    return {
+        "score": float(result.get("score", 5.0)),
+        "feedback": result.get("feedback", "Good attempt. Focus on being more specific with examples and metrics."),
+        "better_answer": result.get("better_answer", "Here's a stronger approach: Start with the challenge, explain your solution, and highlight the impact with metrics.")
+    }
