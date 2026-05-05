@@ -1,6 +1,6 @@
 # 🚀 ResumeIQ - AI-Powered Resume & Career Coach
 
-> Production-ready React + FastAPI application for resume analysis, job matching, and career guidance powered by **local Ollama LLM** (100% free, no API keys needed!)
+> Production-ready React + FastAPI application for resume analysis, job matching, and career guidance powered by **Hugging Face Transformers** (100% free, no API keys needed!)
 
 ![React](https://img.shields.io/badge/React-19+-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green)
@@ -29,8 +29,8 @@ ResumeIQ includes **5 core features** for resume analysis, job matching, and car
 ### Prerequisites
 - Node.js 16+ (for React frontend)
 - Python 3.8+ (for FastAPI backend)
-- Ollama installed and running locally ([https://ollama.ai](https://ollama.ai))
 - ~2GB free disk space
+- Internet connection (for downloading Hugging Face models)
 
 ### Installation (3 minutes)
 
@@ -76,21 +76,17 @@ npm install
 npm run dev
 ```
 
-### Setup Ollama
+### Model Configuration
+
+The backend uses **Hugging Face Transformers** models (distilgpt2 by default):
 
 ```bash
-# 1. Install Ollama from https://ollama.ai
+# Configure model in .env (resumeiq/backend/.env)
+MODEL_NAME=distilgpt2        # Default model
+# Other options: gpt2, distilgpt2, other HF models
 
-# 2. Start Ollama service
-ollama serve
-
-# 3. Pull a model (in another terminal)
-ollama pull mistral
-# or
-ollama pull neural-chat
-
-# 4. Verify it's running
-curl http://localhost:11434/api/tags
+# First run will download the model (~1-2GB)
+# Subsequent runs use cached model
 ```
 
 ### Access the App
@@ -204,7 +200,7 @@ ResumeIQ/
 │   │   ├── main.py                  # FastAPI app entry point
 │   │   ├── models.py                # Data models & schemas
 │   │   ├── database.py              # SQLite setup & ORM
-│   │   ├── inference.py             # Ollama LLM calls
+│   │   ├── inference.py             # LLM inference
 │   │   ├── extract_text.py          # PDF text extraction
 │   │   ├── requirements.txt         # Python dependencies
 │   │   └── .env.example             # Environment template
@@ -228,7 +224,7 @@ ResumeIQ/
 ### Backend
 - **FastAPI** (0.100+) - Modern async Python framework
 - **Python** (3.8+) - Core language
-- **Ollama** - Local LLM (mistral, neural-chat, etc.)
+- **Hugging Face Transformers** - LLM inference (distilgpt2 default)
 - **SQLAlchemy** - ORM for database
 - **SQLite** - Database for persistence
 - **Pydantic** - Data validation & schemas
@@ -247,7 +243,7 @@ ResumeIQ/
 - ✅ **Session Management**: User authentication & sessions
 - ✅ **Data Isolation**: Users only see their own data
 - ✅ **Input Validation**: PDF file validation
-- ✅ **No API Keys**: All processing local (Ollama)
+- ✅ **No API Keys**: All processing local (Hugging Face Transformers)
 - ✅ **Environment Variables**: Sensitive config in .env
 
 ---
@@ -281,26 +277,28 @@ ResumeIQ/
 
 Create `.env` file in `resumeiq/backend/`:
 ```env
-# Ollama configuration
-OLLAMA_URL=http://localhost:11434
-OLLAMA_MODEL=mistral
+# Model configuration
+MODEL_NAME=distilgpt2        # Hugging Face model (default)
+DEVICE=cpu                   # cpu or gpu (0, 1, etc.)
 
 # Optional settings
 DEBUG=false
 DATABASE_URL=sqlite:///./resumeiq.db
 ```
 
+**Note**: On first run, the model will be downloaded from Hugging Face (~1-2GB). This is cached for subsequent runs.
+
 ---
 
 ## 🐛 Troubleshooting
 
-### Ollama Issues
+### Model Loading Issues
 | Problem | Solution |
 |---------|----------|
-| "Ollama server not running" | Run `ollama serve` in terminal |
-| "Model not found" | Run `ollama pull mistral` or `ollama pull neural-chat` |
-| Connection timeout | Verify `http://localhost:11434` is accessible |
-| Slow responses | Close other apps, check available RAM (8GB+ recommended) |
+| "Downloading model..." slow | Normal - first run downloads model. Subsequent runs use cache |
+| "Out of memory" | Reduce model size or use GPU (set DEVICE=0 in .env) |
+| "Model not found" | Check internet connection, or manually run `pip install transformers torch` |
+| "CUDA error" | Use CPU instead: set `DEVICE=cpu` in .env |
 
 ### PDF Upload Issues
 | Problem | Solution |
@@ -401,7 +399,7 @@ For issues, questions, or suggestions:
 Built with ❤️ using:
 - React for the modern UI framework
 - FastAPI for the robust backend
-- Ollama for local LLM capabilities
+- Hugging Face Transformers for NLP capabilities
 - The open-source community
 
 ---
@@ -415,7 +413,7 @@ Built with ❤️ using:
 | **Analysis Time** | 3-4 seconds |
 | **Security** | Bcrypt + Session isolation |
 | **Cost** | 100% FREE |
-| **Model** | Local Ollama (no API costs) |
+| **Model** | Hugging Face Transformers (distilgpt2) |
 | **Database** | SQLite (local) |
 
 ---
