@@ -12,7 +12,10 @@ from database import get_db, init_db, User, Analysis, Resume, InterviewSession
 from models import (
     UserSignup, UserLogin, Token, UserResponse, AnalysisRequest, AnalysisResult,
     RewriteRequest, RewriteResult, MatchRequest, MatchResult, InterviewRequest,
-    InterviewResult, InterviewAnswerRequest, InterviewAnswerResult, RoadmapRequest, RoadmapResult, CoverLetterRequest, CoverLetterResult, AnalysisHistory, ResumeInfo, CurrentResume
+    InterviewResult, InterviewAnswerRequest, InterviewAnswerResult, RoadmapRequest, RoadmapResult, CoverLetterRequest, CoverLetterResult, AnalysisHistory, ResumeInfo, CurrentResume,
+    KeywordOptimizerRequest, KeywordOptimizerResult, ATSScoreRequest, ATSScoreResult,
+    SkillGapRequest, SkillGapResult, ResumeComparisonRequest, ResumeComparisonResult,
+    ResumeVersionRequest, ResumeVersionResult
 )
 from extract_text import extract_text_from_pdf
 import inference
@@ -316,6 +319,78 @@ async def delete_resume(resume_id: int, authorization: str = Header(...), db: Se
     db.commit()
 
     return {"success": True}
+
+@app.post("/api/optimize-keywords", response_model=KeywordOptimizerResult)
+async def optimize_keywords(req: KeywordOptimizerRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    result = inference.optimize_keywords(req.resume, req.job_description)
+
+    analysis = Analysis(
+        user_id=user.id,
+        type="keyword_optimizer",
+        input_text=req.job_description[:500],
+        result=result
+    )
+    db.add(analysis)
+    db.commit()
+
+    return result
+
+@app.post("/api/ats-score", response_model=ATSScoreResult)
+async def check_ats_score(req: ATSScoreRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    result = inference.check_ats_score(req.resume)
+
+    analysis = Analysis(
+        user_id=user.id,
+        type="ats_score",
+        input_text=req.resume[:500],
+        result=result
+    )
+    db.add(analysis)
+    db.commit()
+
+    return result
+
+@app.post("/api/skill-gaps", response_model=SkillGapResult)
+async def analyze_skill_gaps(req: SkillGapRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    result = inference.analyze_skill_gaps(req.current_skills, req.target_role)
+
+    analysis = Analysis(
+        user_id=user.id,
+        type="skill_gap_analyzer",
+        input_text=req.target_role,
+        result=result
+    )
+    db.add(analysis)
+    db.commit()
+
+    return result
+
+@app.post("/api/compare-resumes", response_model=ResumeComparisonResult)
+async def compare_resumes(req: ResumeComparisonRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    result = inference.compare_resumes(req.resume1, req.resume2)
+
+    analysis = Analysis(
+        user_id=user.id,
+        type="resume_comparison",
+        input_text="resume_comparison",
+        result=result
+    )
+    db.add(analysis)
+    db.commit()
+
+    return result
 
 if __name__ == "__main__":
     import uvicorn

@@ -2,6 +2,7 @@ import hashlib
 import json
 import re
 from typing import Dict, Any, List, Set
+from datetime import datetime
 from transformers import pipeline
 import torch
 import os
@@ -512,4 +513,212 @@ JSON Response:"""
             "Included quantified achievements and business impact",
             "Closed with strong call-to-action and enthusiasm"
         ])
+    }
+
+def optimize_keywords(resume_text: str, job_description: str) -> dict:
+    """Optimize resume keywords for better ATS matching"""
+    resume_skills = extract_skills(resume_text)
+    job_skills = extract_skills(job_description)
+
+    # Find keywords to add
+    missing_keywords = job_skills - resume_skills
+    matched_keywords = resume_skills & job_skills
+
+    prompt = f"""Optimize this resume for ATS (Applicant Tracking System) and job matching.
+
+Resume:
+{resume_text[:800]}
+
+Required Keywords from Job Description:
+{', '.join(list(job_skills)[:10])}
+
+Return JSON with:
+- recommended_keywords (list of 5-8 keywords to add)
+- placement_suggestions (how and where to add each keyword)
+- optimized_keywords (keywords already well-placed)
+- ats_improvements (3-4 specific improvements for ATS compatibility)
+
+JSON Response:"""
+
+    response = infer(prompt, max_tokens=400)
+    result = parse_json_response(response)
+
+    return {
+        "recommended_keywords": result.get("recommended_keywords", list(missing_keywords)[:8]),
+        "placement_suggestions": result.get("placement_suggestions", [
+            f"Add {', '.join(list(missing_keywords)[:3])} to skills section",
+            "Include relevant keywords in job descriptions",
+            "Use consistent terminology throughout"
+        ]),
+        "optimized_keywords": result.get("optimized_keywords", list(matched_keywords)[:5]),
+        "ats_improvements": result.get("ats_improvements", [
+            "Use standard section headers (Skills, Experience, Education)",
+            "Avoid graphics, images, and unusual formatting",
+            "Use standard fonts and consistent spacing",
+            "Include complete contact information"
+        ]),
+        "keywords_matched": len(matched_keywords),
+        "keywords_missing": len(missing_keywords)
+    }
+
+def check_ats_score(resume_text: str) -> dict:
+    """Check ATS compatibility score of resume"""
+    lines = resume_text.split('\n')
+    has_contact = any(x in resume_text.lower() for x in ['email', '@', 'phone', '+'])
+    has_sections = any(x in resume_text.lower() for x in ['experience', 'education', 'skills', 'summary'])
+    has_metrics = any(c.isdigit() for c in resume_text if c in '0123456789%+')
+
+    score = 50
+    issues = []
+    suggestions = []
+
+    if has_contact:
+        score += 10
+    else:
+        issues.append("Missing contact information")
+        suggestions.append("Add email and phone number at the top")
+
+    if has_sections:
+        score += 15
+    else:
+        issues.append("Missing standard sections")
+        suggestions.append("Organize content with clear section headers")
+
+    if has_metrics:
+        score += 15
+    else:
+        issues.append("No quantified metrics")
+        suggestions.append("Include numbers, percentages, or measurable achievements")
+
+    # Check formatting
+    if len(lines) < 5:
+        issues.append("Resume appears too short")
+        suggestions.append("Expand with more detailed experience and achievements")
+    else:
+        score += 10
+
+    # Check for keywords
+    skills_found = len(extract_skills(resume_text))
+    score += min(10, skills_found)
+
+    if len(resume_text) < 200:
+        issues.append("Content appears insufficient")
+        suggestions.append("Provide more comprehensive information about experience")
+    else:
+        score += 5
+
+    return {
+        "ats_score": min(100, max(0, score)),
+        "issues": issues,
+        "suggestions": suggestions[:4],
+        "formatting_check": {
+            "has_contact_info": has_contact,
+            "has_standard_sections": has_sections,
+            "has_quantified_metrics": has_metrics,
+            "skills_detected": skills_found
+        }
+    }
+
+def analyze_skill_gaps(current_skills: List[str], target_role: str) -> dict:
+    """Analyze skill gaps between current skills and target role"""
+    current_set = set(s.lower() for s in current_skills) if current_skills else set()
+
+    # Get required skills for role from our skill database
+    role_requirements = {
+        "data scientist": ["python", "pandas", "sql", "statistics", "scikit"],
+        "machine learning engineer": ["python", "pytorch", "tensorflow", "ml fundamentals"],
+        "data analyst": ["sql", "tableau", "power bi", "excel", "python"],
+        "senior software engineer": ["system architecture", "microservices", "api", "scalability"],
+        "cloud architect": ["aws", "kubernetes", "docker", "terraform"],
+        "devops engineer": ["linux", "docker", "kubernetes", "ci/cd", "jenkins"],
+        "full stack developer": ["javascript", "react", "nodejs", "sql", "api"],
+        "backend engineer": ["python", "nodejs", "sql", "api", "microservices"],
+        "frontend engineer": ["javascript", "react", "html", "css", "typescript"],
+    }
+
+    # Find matching requirements
+    role_lower = target_role.lower()
+    required_skills = set()
+    for key, skills in role_requirements.items():
+        if key in role_lower or role_lower in key:
+            required_skills = set(skills)
+            break
+
+    if not required_skills:
+        required_skills = set(["core technical skills", "communication", "problem solving"])
+
+    gaps = required_skills - current_set
+    mastered = required_skills & current_set
+    additional = current_set - required_skills
+
+    return {
+        "role": target_role,
+        "gaps": list(gaps)[:8],
+        "mastered_skills": list(mastered)[:5],
+        "additional_skills": list(additional)[:5],
+        "gap_count": len(gaps),
+        "coverage_percentage": int((len(mastered) / len(required_skills) * 100)) if required_skills else 0,
+        "learning_priority": sorted(list(gaps))[:3],
+        "estimated_learning_time": f"{len(gaps) * 2}-{len(gaps) * 4} weeks"
+    }
+
+def compare_resumes(resume1_text: str, resume2_text: str) -> dict:
+    """Compare two resumes and analyze strengths"""
+    skills1 = extract_skills(resume1_text)
+    skills2 = extract_skills(resume2_text)
+
+    common_skills = skills1 & skills2
+    unique_to_1 = skills1 - skills2
+    unique_to_2 = skills2 - skills1
+
+    len1 = len(resume1_text)
+    len2 = len(resume2_text)
+
+    # Simple content analysis
+    has_metrics_1 = any(c.isdigit() for c in resume1_text if c in '0123456789%')
+    has_metrics_2 = any(c.isdigit() for c in resume2_text if c in '0123456789%')
+
+    prompt = f"""Compare these two resumes. Return JSON with:
+- comparison_summary (who is stronger candidate and why)
+- resume1_strengths (list of 3-4 strengths)
+- resume2_strengths (list of 3-4 strengths)
+- improvement_suggestions (what each resume could improve)
+
+Resume 1:
+{resume1_text[:500]}
+
+Resume 2:
+{resume2_text[:500]}
+
+JSON Response:"""
+
+    response = infer(prompt, max_tokens=400)
+    result = parse_json_response(response)
+
+    return {
+        "comparison_summary": result.get("comparison_summary", "Comparison analysis of both resumes"),
+        "resume1_strengths": result.get("resume1_strengths", [
+            f"Contains {len(skills1)} identified skills",
+            "Has quantified metrics" if has_metrics_1 else "Needs more metrics"
+        ]),
+        "resume2_strengths": result.get("resume2_strengths", [
+            f"Contains {len(skills2)} identified skills",
+            "Has quantified metrics" if has_metrics_2 else "Needs more metrics"
+        ]),
+        "common_skills": list(common_skills)[:5],
+        "resume1_unique": list(unique_to_1)[:5],
+        "resume2_unique": list(unique_to_2)[:5],
+        "length_comparison": {"resume1": len1, "resume2": len2},
+        "skills_comparison": {"resume1_total": len(skills1), "resume2_total": len(skills2)}
+    }
+
+def manage_resume_version(resume_text: str, version_name: str, description: str = "") -> dict:
+    """Create and manage resume versions"""
+    return {
+        "version_name": version_name,
+        "description": description,
+        "created_at": datetime.now().isoformat(),
+        "content_preview": resume_text[:200],
+        "word_count": len(resume_text.split()),
+        "skills_identified": len(extract_skills(resume_text))
     }

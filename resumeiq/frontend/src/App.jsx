@@ -11,6 +11,11 @@ import { Rewriter } from './pages/Rewriter'
 import { CoverLetter } from './pages/CoverLetter'
 import { Interview } from './pages/Interview'
 import { Learning } from './pages/Learning'
+import { KeywordOptimizer } from './pages/KeywordOptimizer'
+import { ATSScore } from './pages/ATSScore'
+import { SkillGapAnalyzer } from './pages/SkillGapAnalyzer'
+import { ResumeComparison } from './pages/ResumeComparison'
+import { ResumeVersioning } from './pages/ResumeVersioning'
 import { Navbar } from './components/Navbar'
 import { Sidebar } from './components/Sidebar'
 
@@ -29,6 +34,11 @@ function MainApp() {
       case 'cover-letter': return <CoverLetter />
       case 'interview': return <Interview />
       case 'learning': return <Learning />
+      case 'keyword-optimizer': return <KeywordOptimizer />
+      case 'ats-score': return <ATSScore />
+      case 'skill-gap': return <SkillGapAnalyzer />
+      case 'compare': return <ResumeComparison />
+      case 'versioning': return <ResumeVersioning />
       default: return <Dashboard onNavigate={setCurrentPage} />
     }
   }

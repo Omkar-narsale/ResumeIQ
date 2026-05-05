@@ -114,3 +114,65 @@ class CurrentResume(BaseModel):
 
     class Config:
         from_attributes = True
+
+class KeywordOptimizerRequest(BaseModel):
+    resume: str
+    job_description: str
+
+class KeywordOptimizerResult(BaseModel):
+    recommended_keywords: List[str]
+    placement_suggestions: List[str]
+    optimized_keywords: List[str]
+    ats_improvements: List[str]
+    keywords_matched: int
+    keywords_missing: int
+
+class ATSScoreRequest(BaseModel):
+    resume: str
+
+class ATSScoreResult(BaseModel):
+    ats_score: float
+    issues: List[str]
+    suggestions: List[str]
+    formatting_check: dict
+
+class SkillGapRequest(BaseModel):
+    current_skills: List[str]
+    target_role: str
+
+class SkillGapResult(BaseModel):
+    role: str
+    gaps: List[str]
+    mastered_skills: List[str]
+    additional_skills: List[str]
+    gap_count: int
+    coverage_percentage: int
+    learning_priority: List[str]
+    estimated_learning_time: str
+
+class ResumeComparisonRequest(BaseModel):
+    resume1: str
+    resume2: str
+
+class ResumeComparisonResult(BaseModel):
+    comparison_summary: str
+    resume1_strengths: List[str]
+    resume2_strengths: List[str]
+    common_skills: List[str]
+    resume1_unique: List[str]
+    resume2_unique: List[str]
+    length_comparison: dict
+    skills_comparison: dict
+
+class ResumeVersionRequest(BaseModel):
+    resume: str
+    version_name: str
+    description: Optional[str] = ""
+
+class ResumeVersionResult(BaseModel):
+    version_name: str
+    description: str
+    created_at: str
+    content_preview: str
+    word_count: int
+    skills_identified: int

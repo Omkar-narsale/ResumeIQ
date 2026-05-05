@@ -13,6 +13,11 @@ const menuItems = [
   { id: 'cover-letter', label: 'Cover Letter', icon: '📝' },
   { id: 'interview', label: 'Interview Coach', icon: '🎤' },
   { id: 'learning', label: 'Learning Path', icon: '📚' },
+  { id: 'keyword-optimizer', label: 'Keyword Optimizer', icon: '🔑' },
+  { id: 'ats-score', label: 'ATS Score', icon: '📋' },
+  { id: 'skill-gap', label: 'Skill Gap Analysis', icon: '🎓' },
+  { id: 'compare', label: 'Resume Comparison', icon: '📊' },
+  { id: 'versioning', label: 'Resume Versioning', icon: '📌' },
 ]
 
 export const Sidebar = ({ isOpen, currentPage, onNavigate, onClose }) => {

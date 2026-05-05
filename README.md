@@ -12,7 +12,7 @@
 
 ## ✨ Features Overview
 
-ResumeIQ includes **5 core features** for resume analysis, job matching, and career development:
+ResumeIQ includes **10 advanced features** for resume analysis, job matching, and career development:
 
 | Feature | Description |
 |---------|-------------|
@@ -20,6 +20,14 @@ ResumeIQ includes **5 core features** for resume analysis, job matching, and car
 | **🎯 Job Matching** | Compare resume to job description, get match score (%), see matched/missing skills and improvement suggestions |
 | **✍️ Resume Rewriter** | Professionally rewrite resume for target role with stronger action verbs, metrics, and ATS optimization |
 | **📈 Learning Paths** | Get personalized 6-month career development roadmap for your target role with structured learning goals |
+| **📝 Cover Letter Generator** | Generate professional, role-specific cover letters tailored to job descriptions |
+| **🎤 Mock Interview Practice** | Practice with AI-generated interview questions and get scored feedback on your answers |
+| **📌 Resume Templates** | Browse and use professional resume templates optimized for different roles |
+| **🔑 Keyword Optimizer** | Optimize resume keywords for ATS compatibility and job description matching |
+| **📋 ATS Score Checker** | Analyze resume for ATS compatibility with formatting suggestions and improvements |
+| **🎓 Skill Gap Analyzer** | Identify skill gaps between current abilities and target role with learning timeline |
+| **📊 Resume Comparison** | Compare two resumes side-by-side to find strengths and areas for improvement |
+| **📌 Resume Versioning** | Create and manage multiple resume versions for different job types and companies |
 | **📊 Dashboard** | Track all analyses, view metrics, and see your resume analysis history |
 
 ---
@@ -408,9 +416,9 @@ Built with ❤️ using:
 
 | Metric | Value |
 |--------|-------|
-| **Total Features** | 5 core features |
+| **Total Features** | 13 advanced features |
 | **Supported Roles** | 10+ |
-| **Analysis Time** | 3-4 seconds |
+| **Analysis Time** | 2-4 seconds |
 | **Security** | Bcrypt + Session isolation |
 | **Cost** | 100% FREE |
 | **Model** | Hugging Face Transformers (distilgpt2) |
