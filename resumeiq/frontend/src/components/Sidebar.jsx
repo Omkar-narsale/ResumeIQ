@@ -6,6 +6,7 @@ import { useResume } from '../hooks/useResume'
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊' },
   { id: 'resume', label: 'My Resume', icon: '📂', alwaysEnabled: true },
+  { id: 'templates', label: 'Resume Templates', icon: '🎨' },
   { id: 'analyze', label: 'Resume Analyzer', icon: '📄' },
   { id: 'matcher', label: 'Job Matcher', icon: '🎯' },
   { id: 'rewriter', label: 'Resume Rewriter', icon: '✍️' },

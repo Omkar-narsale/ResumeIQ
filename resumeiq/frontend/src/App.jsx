@@ -5,6 +5,7 @@ import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
 import { ResumeUpload } from './pages/ResumeUpload'
 import { Analyzer } from './pages/Analyzer'
+import { ResumeTemplates } from './pages/ResumeTemplates'
 import { JobMatcher } from './pages/JobMatcher'
 import { Rewriter } from './pages/Rewriter'
 import { CoverLetter } from './pages/CoverLetter'
@@ -21,6 +22,7 @@ function MainApp() {
     switch (currentPage) {
       case 'dashboard': return <Dashboard onNavigate={setCurrentPage} />
       case 'resume': return <ResumeUpload />
+      case 'templates': return <ResumeTemplates />
       case 'analyze': return <Analyzer />
       case 'matcher': return <JobMatcher />
       case 'rewriter': return <Rewriter />
