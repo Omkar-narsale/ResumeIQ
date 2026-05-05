@@ -7,6 +7,7 @@ import { ResumeUpload } from './pages/ResumeUpload'
 import { Analyzer } from './pages/Analyzer'
 import { JobMatcher } from './pages/JobMatcher'
 import { Rewriter } from './pages/Rewriter'
+import { CoverLetter } from './pages/CoverLetter'
 import { Interview } from './pages/Interview'
 import { Learning } from './pages/Learning'
 import { Navbar } from './components/Navbar'
@@ -23,6 +24,7 @@ function MainApp() {
       case 'analyze': return <Analyzer />
       case 'matcher': return <JobMatcher />
       case 'rewriter': return <Rewriter />
+      case 'cover-letter': return <CoverLetter />
       case 'interview': return <Interview />
       case 'learning': return <Learning />
       default: return <Dashboard onNavigate={setCurrentPage} />

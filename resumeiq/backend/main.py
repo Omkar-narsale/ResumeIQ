@@ -12,7 +12,7 @@ from database import get_db, init_db, User, Analysis, Resume, InterviewSession
 from models import (
     UserSignup, UserLogin, Token, UserResponse, AnalysisRequest, AnalysisResult,
     RewriteRequest, RewriteResult, MatchRequest, MatchResult, InterviewRequest,
-    InterviewResult, InterviewAnswerRequest, InterviewAnswerResult, RoadmapRequest, RoadmapResult, AnalysisHistory, ResumeInfo, CurrentResume
+    InterviewResult, InterviewAnswerRequest, InterviewAnswerResult, RoadmapRequest, RoadmapResult, CoverLetterRequest, CoverLetterResult, AnalysisHistory, ResumeInfo, CurrentResume
 )
 from extract_text import extract_text_from_pdf
 import inference
@@ -134,6 +134,24 @@ async def rewrite(req: RewriteRequest, authorization: str = Header(...), db: Ses
         user_id=user.id,
         type="rewrite",
         input_text=req.text[:500],
+        result=result
+    )
+    db.add(analysis)
+    db.commit()
+
+    return result
+
+@app.post("/api/generate-cover-letter", response_model=CoverLetterResult)
+async def generate_cover_letter(req: CoverLetterRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    result = inference.generate_cover_letter(req.job_description, req.resume)
+
+    analysis = Analysis(
+        user_id=user.id,
+        type="cover_letter",
+        input_text=req.job_description[:500],
         result=result
     )
     db.add(analysis)

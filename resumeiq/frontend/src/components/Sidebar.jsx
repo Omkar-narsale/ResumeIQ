@@ -9,6 +9,7 @@ const menuItems = [
   { id: 'analyze', label: 'Resume Analyzer', icon: '📄' },
   { id: 'matcher', label: 'Job Matcher', icon: '🎯' },
   { id: 'rewriter', label: 'Resume Rewriter', icon: '✍️' },
+  { id: 'cover-letter', label: 'Cover Letter', icon: '📝' },
   { id: 'interview', label: 'Interview Coach', icon: '🎤' },
   { id: 'learning', label: 'Learning Path', icon: '📚' },
 ]

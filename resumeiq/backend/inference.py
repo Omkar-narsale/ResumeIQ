@@ -484,3 +484,32 @@ JSON Response:"""
         "feedback": result.get("feedback", "Good attempt. Focus on being more specific with examples and metrics."),
         "better_answer": result.get("better_answer", "Here's a stronger approach: Start with the challenge, explain your solution, and highlight the impact with metrics.")
     }
+
+def generate_cover_letter(job_description: str, resume_text: str) -> dict:
+    """Generate a professional cover letter for a job"""
+    prompt = f"""Generate a professional cover letter based on this resume and job description.
+
+Job Description:
+{job_description[:500]}
+
+Resume:
+{resume_text[:800]}
+
+Return JSON with:
+- cover_letter (a complete, compelling cover letter 200-300 words)
+- improvements (list of 4 key improvements made: strong opening, relevant skills matching, impact metrics, compelling closing)
+
+JSON Response:"""
+
+    response = infer(prompt, max_tokens=500)
+    result = parse_json_response(response)
+
+    return {
+        "cover_letter": result.get("cover_letter", "Dear Hiring Manager,\n\nI am writing to express my strong interest in this position. With my experience and skills aligned with your requirements, I am confident I can contribute significantly to your team. I am excited about the opportunity to bring my expertise to your organization.\n\nBest regards"),
+        "improvements": result.get("improvements", [
+            "Opened with specific role and company name",
+            "Highlighted relevant skills matching job requirements",
+            "Included quantified achievements and business impact",
+            "Closed with strong call-to-action and enthusiasm"
+        ])
+    }

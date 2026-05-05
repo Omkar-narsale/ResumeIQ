@@ -80,6 +80,14 @@ class RoadmapResult(BaseModel):
     estimated_duration: str
     resources: List[str]
 
+class CoverLetterRequest(BaseModel):
+    job_description: str
+    resume: str
+
+class CoverLetterResult(BaseModel):
+    cover_letter: str
+    improvements: List[str]
+
 class AnalysisHistory(BaseModel):
     id: int
     type: str
