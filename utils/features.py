@@ -165,6 +165,51 @@ def analyze_resume(resume_text: str, target_role: str = None) -> dict:
     }
 
 
+def generate_generic_roadmap(target_role: str, resume_text: str = None) -> dict:
+    """
+    Generate roadmap for roles not in the predefined map
+    Uses resume skills to determine learning path
+    """
+    import re
+
+    # Generic skill categories
+    generic_skills = {
+        "technical": ["SQL", "Python", "JavaScript", "APIs", "Databases", "Git"],
+        "business": ["Communication", "Project Management", "Leadership", "Strategy", "Analytics"],
+        "creative": ["Design", "Content", "Copywriting", "Storytelling", "Visual Communication"],
+        "data": ["Excel", "Python", "SQL", "Data Analysis", "Statistics", "Tableau"]
+    }
+
+    detected_skills = []
+    if resume_text:
+        text_lower = resume_text.lower()
+        for skill_set in generic_skills.values():
+            for skill in skill_set:
+                if skill.lower() in text_lower:
+                    detected_skills.append(skill)
+
+    strong_skills_text = ", ".join(list(dict.fromkeys(detected_skills))[:5]) if detected_skills else "Analyze your resume to discover skills"
+
+    return {
+        "strong_skills": strong_skills_text,
+        "missing_skills": "Review role requirements and identify skill gaps",
+        "roadmap": f"""MONTH 1-2 (Foundation):
+• Research {target_role} role requirements and responsibilities
+• Identify key skills needed for {target_role}
+
+MONTH 3-4 (Development):
+• Build foundational skills in priority areas
+• Complete relevant courses or certifications
+
+MONTH 5-6 (Advanced):
+• Create projects demonstrating {target_role} capabilities
+• Network with professionals in {target_role} field""",
+        "focus_areas": f"• Understanding {target_role} responsibilities\n• Identifying transferable skills\n• Building relevant experience",
+        "next_actions": f"• Research job descriptions for {target_role}\n• Identify required skills from job postings\n• Create action plan based on skill gaps",
+        "timeline": "6 months to transition or advancement"
+    }
+
+
 def generate_career_roadmap_fast(target_role: str, resume_text: str = None) -> dict:
     """
     Generate FAST role-specific learning roadmap without LLM (local analysis only)
@@ -224,6 +269,34 @@ def generate_career_roadmap_fast(target_role: str, resume_text: str = None) -> d
             "month1": ["Docker containers and images", "Kubernetes basics"],
             "month2": ["CI/CD pipelines (GitHub Actions, Jenkins)", "AWS services"],
             "month3": ["Infrastructure as code (Terraform)", "Monitoring and logging"]
+        },
+        "digital marketing": {
+            "required": ["SEO", "SEM", "Google Analytics", "Content Marketing", "Social Media", "Email Marketing", "Marketing Automation", "Data Analysis", "CRM"],
+            "focus": "SEO, Google Analytics, Social Media, Content Strategy",
+            "month1": ["Master Google Analytics fundamentals", "Learn SEO best practices"],
+            "month2": ["Social media strategy and campaigns", "Email marketing automation"],
+            "month3": ["Data-driven marketing analysis", "Campaign optimization techniques"]
+        },
+        "product manager": {
+            "required": ["Product Strategy", "User Research", "Data Analysis", "Roadmapping", "Stakeholder Management", "Design Thinking", "SQL", "Metrics"],
+            "focus": "Product Strategy, User Research, Data Analysis, Roadmapping",
+            "month1": ["User research and discovery methods", "Product thinking fundamentals"],
+            "month2": ["OKR framework and metrics", "Roadmapping techniques"],
+            "month3": ["Data-driven decision making", "Stakeholder management"]
+        },
+        "ux designer": {
+            "required": ["Figma", "User Research", "Prototyping", "Wireframing", "Design Systems", "CSS", "JavaScript", "User Testing", "Accessibility"],
+            "focus": "Figma, User Research, Prototyping, Design Systems",
+            "month1": ["Master Figma tools and workflows", "Learn design systems basics"],
+            "month2": ["User research and testing methods", "Create interactive prototypes"],
+            "month3": ["Design accessibility standards", "Build design systems"]
+        },
+        "data scientist": {
+            "required": ["Python", "Machine Learning", "Statistics", "SQL", "Data Visualization", "TensorFlow", "scikit-learn", "Pandas", "Deep Learning"],
+            "focus": "Python, Machine Learning, Statistics, Data Visualization",
+            "month1": ["Advanced Python for data science", "Statistics and probability"],
+            "month2": ["Machine learning algorithms and scikit-learn", "Data visualization techniques"],
+            "month3": ["Deep learning and neural networks", "Production ML deployment"]
         }
     }
 
@@ -235,7 +308,8 @@ def generate_career_roadmap_fast(target_role: str, resume_text: str = None) -> d
             break
 
     if not matched_role:
-        matched_role = "software engineer"  # Default
+        # Create generic roadmap for unknown roles based on resume skills
+        return generate_generic_roadmap(target_role, resume_text)
 
     role_data = role_skills_map[matched_role]
     required_skills = role_data["required"]

@@ -126,7 +126,7 @@ def show_salary_guide():
             yaxis=dict(tickformat="$,.0f")
         )
 
-        st.plotly_chart(fig, use_container_width=True, theme="dark")
+        st.plotly_chart(fig, use_container_width=True, theme="streamlit")
 
         st.markdown('<div class="section-spacing"></div>', unsafe_allow_html=True)
 

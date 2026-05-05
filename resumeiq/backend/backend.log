@@ -1,0 +1,60 @@
+Traceback (most recent call last):
+  File "C:\Users\Omkar\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\networks.py", line 966, in import_email_validator
+    import email_validator
+ModuleNotFoundError: No module named 'email_validator'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\Omkar\Desktop\AI PROJECT\resumeiq\backend\main.py", line 12, in <module>
+    from models import (
+    ...<3 lines>...
+    )
+  File "C:\Users\Omkar\Desktop\AI PROJECT\resumeiq\backend\models.py", line 5, in <module>
+    class UserSignup(BaseModel):
+    ...<2 lines>...
+        password: str
+  File "C:\Users\Omkar\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\_internal\_model_construction.py", line 256, in __new__
+    complete_model_class(
+    ~~~~~~~~~~~~~~~~~~~~^
+        cls,
+        ^^^^
+    ...<3 lines>...
+        create_model_module=_create_model_module,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Omkar\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\_internal\_model_construction.py", line 667, in complete_model_class
+    schema = gen_schema.generate_schema(cls)
+  File "C:\Users\Omkar\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\_internal\_generate_schema.py", line 744, in generate_schema
+    schema = self._generate_schema_inner(obj)
+  File "C:\Users\Omkar\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\_internal\_generate_schema.py", line 1028, in _generate_schema_inner
+    return self._model_schema(obj)
+           ~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\Omkar\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\_internal\_generate_schema.py", line 858, in _model_schema
+    {k: self._generate_md_field_schema(k, v, decorators) for k, v in fields.items()},
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Omkar\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\_internal\_generate_schema.py", line 1235, in _generate_md_field_schema
+    schema, metadata = self._common_field_schema(name, field_info, decorators)
+                       ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Omkar\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\_internal\_generate_schema.py", line 1289, in _common_field_schema
+    schema = self._apply_annotations(
+        source_type,
+        annotations + validators_from_decorators,
+    )
+  File "C:\Users\Omkar\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\_internal\_generate_schema.py", line 2242, in _apply_annotations
+    schema = get_inner_schema(source_type)
+  File "C:\Users\Omkar\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\_internal\_schema_generation_shared.py", line 83, in __call__
+    schema = self._handler(source_type)
+  File "C:\Users\Omkar\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\_internal\_generate_schema.py", line 2218, in inner_handler
+    schema = self._generate_schema_from_get_schema_method(obj, source_type)
+  File "C:\Users\Omkar\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\_internal\_generate_schema.py", line 921, in _generate_schema_from_get_schema_method
+    schema = get_schema(
+        source, CallbackGetCoreSchemaHandler(self._generate_schema_inner, self, ref_mode=ref_mode)
+    )
+  File "C:\Users\Omkar\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\networks.py", line 1006, in __get_pydantic_core_schema__
+    import_email_validator()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Omkar\AppData\Local\Programs\Python\Python313\Lib\site-packages\pydantic\networks.py", line 968, in import_email_validator
+    raise ImportError("email-validator is not installed, run `pip install 'pydantic[email]'`") from e
+ImportError: email-validator is not installed, run `pip install 'pydantic[email]'`

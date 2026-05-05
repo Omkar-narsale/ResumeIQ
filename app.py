@@ -897,45 +897,49 @@ def show_resume_review():
 
                 with col2:
                     if st.button("📄 PDF", use_container_width=True, key="export_pdf"):
-                        try:
-                            pdf_data = generate_pdf_resume(resume_text, template.lower())
+                        st.session_state.export_format = "pdf"
+                        st.session_state.export_template = template
+
+                with col3:
+                    if st.button("📝 DOCX", use_container_width=True, key="export_docx"):
+                        st.session_state.export_format = "docx"
+
+                with col4:
+                    if st.button("📊 CSV", use_container_width=True, key="export_csv"):
+                        st.session_state.export_format = "csv"
+
+                # Render download button based on session state
+                if st.session_state.get("export_format"):
+                    try:
+                        if st.session_state.export_format == "pdf":
+                            pdf_data = generate_pdf_resume(resume_text, st.session_state.get("export_template", "modern").lower())
                             st.download_button(
-                                label="Download PDF",
+                                label="⬇️ Download PDF",
                                 data=pdf_data,
                                 file_name="resume.pdf",
                                 mime="application/pdf",
                                 key="download_pdf_button"
                             )
-                        except Exception as e:
-                            st.error(f"Error generating PDF: {str(e)}")
-
-                with col3:
-                    if st.button("📝 DOCX", use_container_width=True, key="export_docx"):
-                        try:
+                        elif st.session_state.export_format == "docx":
                             docx_data = generate_docx_resume(resume_text)
                             st.download_button(
-                                label="Download DOCX",
+                                label="⬇️ Download DOCX",
                                 data=docx_data,
                                 file_name="resume.docx",
                                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                                 key="download_docx_button"
                             )
-                        except Exception as e:
-                            st.error(f"Error generating DOCX: {str(e)}")
-
-                with col4:
-                    if st.button("📊 CSV", use_container_width=True, key="export_csv"):
-                        try:
+                        elif st.session_state.export_format == "csv":
                             csv_data = generate_csv_export(st.session_state.latest_analysis)
                             st.download_button(
-                                label="Download CSV",
+                                label="⬇️ Download CSV",
                                 data=csv_data,
                                 file_name="analysis.csv",
                                 mime="text/csv",
                                 key="download_csv_button"
                             )
-                        except Exception as e:
-                            st.error(f"Error generating CSV: {str(e)}")
+                    except Exception as e:
+                        st.error(f"Error generating export: {str(e)}")
 
                 st.success("✅ Resume analysis complete!")
 

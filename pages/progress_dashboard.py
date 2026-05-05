@@ -105,7 +105,7 @@ def show_progress_dashboard():
             height=400
         )
 
-        st.plotly_chart(fig, use_container_width=True, theme="dark")
+        st.plotly_chart(fig, use_container_width=True, theme="streamlit")
     else:
         st.info("📤 No analyses yet. Upload a resume to get started!")
 
@@ -172,4 +172,4 @@ def show_progress_dashboard():
             showlegend=False
         )
 
-        st.plotly_chart(fig, use_container_width=True, theme="dark")
+        st.plotly_chart(fig, use_container_width=True, theme="streamlit")
