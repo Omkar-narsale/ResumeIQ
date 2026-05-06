@@ -6,6 +6,13 @@ from datetime import datetime
 from transformers import pipeline
 import torch
 import os
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from docx import Document
+from docx.shared import Pt, RGBColor, Inches
 
 MODEL_NAME = os.getenv("MODEL_NAME", "distilgpt2")
 DEVICE = os.getenv("DEVICE", "cpu")
@@ -721,4 +728,178 @@ def manage_resume_version(resume_text: str, version_name: str, description: str 
         "content_preview": resume_text[:200],
         "word_count": len(resume_text.split()),
         "skills_identified": len(extract_skills(resume_text))
+    }
+
+def generate_resume_pdf(resume_text: str, filename: str = "resume.pdf") -> BytesIO:
+    """Generate PDF version of resume"""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=14,
+        textColor=RGBColor(0, 51, 102),
+        spaceAfter=6,
+        alignment=1
+    )
+
+    body_style = ParagraphStyle(
+        'CustomBody',
+        parent=styles['Normal'],
+        fontSize=10,
+        leading=12,
+        spaceAfter=4
+    )
+
+    story = []
+
+    # Split resume into sections
+    lines = resume_text.split('\n')
+    for line in lines:
+        if line.strip():
+            if any(header in line.upper() for header in ['EXPERIENCE', 'EDUCATION', 'SKILLS', 'SUMMARY', 'OBJECTIVE']):
+                story.append(Paragraph(line.strip(), title_style))
+                story.append(Spacer(1, 0.1*inch))
+            else:
+                story.append(Paragraph(line.strip(), body_style))
+        else:
+            story.append(Spacer(1, 0.05*inch))
+
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
+def generate_resume_docx(resume_text: str, filename: str = "resume.docx") -> BytesIO:
+    """Generate DOCX version of resume"""
+    doc = Document()
+
+    lines = resume_text.split('\n')
+    for line in lines:
+        if line.strip():
+            paragraph = doc.add_paragraph(line.strip())
+
+            # Format headers
+            if any(header in line.upper() for header in ['EXPERIENCE', 'EDUCATION', 'SKILLS', 'SUMMARY', 'OBJECTIVE']):
+                for run in paragraph.runs:
+                    run.font.bold = True
+                    run.font.size = Pt(12)
+                    run.font.color.rgb = RGBColor(0, 51, 102)
+
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
+
+def check_grammar(resume_text: str) -> dict:
+    """Check grammar and spelling in resume"""
+    issues = []
+    suggestions = []
+
+    # Simple regex-based grammar checks
+    patterns = {
+        r'\b[A-Z]{2,}\b(?!\s[A-Z])': 'Acronym without explanation',
+        r'(\w+)\s+\1\b': 'Repeated word detected',
+        r'\s{2,}': 'Multiple spaces detected',
+        r'[,.:;!?]\s{0}': 'Missing space after punctuation',
+    }
+
+    for pattern, issue in patterns.items():
+        matches = re.finditer(pattern, resume_text)
+        for match in matches:
+            issues.append({
+                'type': issue,
+                'text': match.group(),
+                'position': match.start(),
+                'suggestion': f'Review: {issue}'
+            })
+
+    # Check for common resume errors
+    common_errors = {
+        'teh': 'the',
+        'recieve': 'receive',
+        'seperate': 'separate',
+        'occured': 'occurred',
+        'wich': 'which',
+        'managment': 'management',
+        'responsiblity': 'responsibility',
+    }
+
+    text_lower = resume_text.lower()
+    for error, correction in common_errors.items():
+        if error in text_lower:
+            pos = text_lower.find(error)
+            issues.append({
+                'type': 'Spelling Error',
+                'text': error,
+                'position': pos,
+                'suggestion': f'Did you mean: {correction}?'
+            })
+            suggestions.append(f'Replace "{error}" with "{correction}"')
+
+    # Check for weak action verbs
+    weak_verbs = ['helped', 'worked', 'did', 'made', 'handled', 'responsible for']
+    strong_verbs = ['Led', 'Developed', 'Implemented', 'Designed', 'Managed', 'Drove']
+
+    for weak in weak_verbs:
+        if weak.lower() in text_lower:
+            suggestions.append(f'Replace "{weak}" with stronger verb like "{strong_verbs[weak_verbs.index(weak)]}"')
+
+    score = 100 - (len(issues) * 5) - (len(suggestions) * 3)
+    score = max(0, min(100, score))
+
+    return {
+        'grammar_score': score,
+        'issues_found': len(issues),
+        'issues': issues[:10],  # Limit to 10 issues
+        'suggestions': suggestions[:5],  # Limit to 5 suggestions
+        'overall_feedback': 'Good grammar!' if score >= 80 else 'Needs improvement' if score >= 60 else 'Multiple issues found'
+    }
+
+def batch_match_jobs(resume_text: str, job_descriptions: List[str]) -> dict:
+    """Compare resume against multiple job descriptions"""
+    results = []
+
+    resume_skills = extract_skills(resume_text)
+
+    for idx, job_desc in enumerate(job_descriptions, 1):
+        job_skills = extract_skills(job_desc)
+        matched_skills = resume_skills & job_skills
+        missing_skills = job_skills - resume_skills
+
+        if len(job_skills) == 0:
+            match_percentage = 50
+        else:
+            match_percentage = int((len(matched_skills) / len(job_skills)) * 100)
+
+        # Calculate score
+        if len(missing_skills) > len(job_skills) * 0.7:
+            score = 3 + (match_percentage / 50)
+        elif len(missing_skills) > len(job_skills) * 0.5:
+            score = 5 + (match_percentage / 50)
+        elif len(missing_skills) > len(job_skills) * 0.2:
+            score = 6 + (match_percentage / 100)
+        else:
+            score = 8 + (match_percentage / 200)
+
+        score = round(min(10, max(3, score)), 1)
+
+        results.append({
+            'job_index': idx,
+            'match_score': score,
+            'match_percentage': match_percentage,
+            'skills_matched': list(matched_skills)[:5],
+            'skills_missing': list(missing_skills)[:5],
+            'fit_level': 'Excellent' if score >= 8 else 'Good' if score >= 6 else 'Fair' if score >= 4 else 'Poor'
+        })
+
+    # Sort by match score
+    results_sorted = sorted(results, key=lambda x: x['match_score'], reverse=True)
+
+    return {
+        'total_jobs': len(job_descriptions),
+        'best_matches': results_sorted[:3],  # Top 3
+        'all_results': results_sorted,
+        'avg_score': round(sum(r['match_score'] for r in results) / len(results), 1) if results else 0
     }

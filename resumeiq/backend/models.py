@@ -176,3 +176,27 @@ class ResumeVersionResult(BaseModel):
     content_preview: str
     word_count: int
     skills_identified: int
+
+class GrammarCheckRequest(BaseModel):
+    resume: str
+
+class GrammarCheckResult(BaseModel):
+    grammar_score: float
+    issues_found: int
+    issues: List[dict]
+    suggestions: List[str]
+    overall_feedback: str
+
+class BatchJobMatchRequest(BaseModel):
+    resume: str
+    job_descriptions: List[str]
+
+class BatchJobMatchResult(BaseModel):
+    total_jobs: int
+    best_matches: List[dict]
+    all_results: List[dict]
+    avg_score: float
+
+class ResumeDownloadRequest(BaseModel):
+    resume: str
+    format: str  # 'pdf' or 'docx'

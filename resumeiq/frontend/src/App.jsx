@@ -16,6 +16,9 @@ import { ATSScore } from './pages/ATSScore'
 import { SkillGapAnalyzer } from './pages/SkillGapAnalyzer'
 import { ResumeComparison } from './pages/ResumeComparison'
 import { ResumeVersioning } from './pages/ResumeVersioning'
+import { GrammarCheck } from './pages/GrammarCheck'
+import { BatchJobMatch } from './pages/BatchJobMatch'
+import { ResumeDownload } from './pages/ResumeDownload'
 import { Navbar } from './components/Navbar'
 import { Sidebar } from './components/Sidebar'
 
@@ -30,6 +33,7 @@ function MainApp() {
       case 'templates': return <ResumeTemplates />
       case 'analyze': return <Analyzer />
       case 'matcher': return <JobMatcher />
+      case 'batch-match': return <BatchJobMatch />
       case 'rewriter': return <Rewriter />
       case 'cover-letter': return <CoverLetter />
       case 'interview': return <Interview />
@@ -39,6 +43,8 @@ function MainApp() {
       case 'skill-gap': return <SkillGapAnalyzer />
       case 'compare': return <ResumeComparison />
       case 'versioning': return <ResumeVersioning />
+      case 'grammar-check': return <GrammarCheck />
+      case 'download': return <ResumeDownload />
       default: return <Dashboard onNavigate={setCurrentPage} />
     }
   }

@@ -9,6 +9,7 @@ const menuItems = [
   { id: 'templates', label: 'Resume Templates', icon: '🎨' },
   { id: 'analyze', label: 'Resume Analyzer', icon: '📄' },
   { id: 'matcher', label: 'Job Matcher', icon: '🎯' },
+  { id: 'batch-match', label: 'Batch Job Matching', icon: '🔍' },
   { id: 'rewriter', label: 'Resume Rewriter', icon: '✍️' },
   { id: 'cover-letter', label: 'Cover Letter', icon: '📝' },
   { id: 'interview', label: 'Interview Coach', icon: '🎤' },
@@ -18,6 +19,8 @@ const menuItems = [
   { id: 'skill-gap', label: 'Skill Gap Analysis', icon: '🎓' },
   { id: 'compare', label: 'Resume Comparison', icon: '📊' },
   { id: 'versioning', label: 'Resume Versioning', icon: '📌' },
+  { id: 'grammar-check', label: 'Grammar Check', icon: '✏️' },
+  { id: 'download', label: 'Download Resume', icon: '📥' },
 ]
 
 export const Sidebar = ({ isOpen, currentPage, onNavigate, onClose }) => {

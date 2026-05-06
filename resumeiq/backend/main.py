@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Header, UploadFile, File
+from fastapi import FastAPI, Depends, HTTPException, status, Header, UploadFile, File, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
@@ -15,7 +15,8 @@ from models import (
     InterviewResult, InterviewAnswerRequest, InterviewAnswerResult, RoadmapRequest, RoadmapResult, CoverLetterRequest, CoverLetterResult, AnalysisHistory, ResumeInfo, CurrentResume,
     KeywordOptimizerRequest, KeywordOptimizerResult, ATSScoreRequest, ATSScoreResult,
     SkillGapRequest, SkillGapResult, ResumeComparisonRequest, ResumeComparisonResult,
-    ResumeVersionRequest, ResumeVersionResult
+    ResumeVersionRequest, ResumeVersionResult, GrammarCheckRequest, GrammarCheckResult,
+    BatchJobMatchRequest, BatchJobMatchResult, ResumeDownloadRequest
 )
 from extract_text import extract_text_from_pdf
 import inference
@@ -391,6 +392,64 @@ async def compare_resumes(req: ResumeComparisonRequest, authorization: str = Hea
     db.commit()
 
     return result
+
+@app.post("/api/grammar-check", response_model=GrammarCheckResult)
+async def grammar_check(req: GrammarCheckRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    result = inference.check_grammar(req.resume)
+
+    analysis = Analysis(
+        user_id=user.id,
+        type="grammar_check",
+        input_text=req.resume[:500],
+        result=result
+    )
+    db.add(analysis)
+    db.commit()
+
+    return result
+
+@app.post("/api/batch-match-jobs", response_model=BatchJobMatchResult)
+async def batch_match_jobs(req: BatchJobMatchRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    result = inference.batch_match_jobs(req.resume, req.job_descriptions)
+
+    analysis = Analysis(
+        user_id=user.id,
+        type="batch_job_match",
+        input_text=f"{req.resume[:200]}__{len(req.job_descriptions)}_jobs",
+        result=result
+    )
+    db.add(analysis)
+    db.commit()
+
+    return result
+
+@app.post("/api/download-resume")
+async def download_resume(req: ResumeDownloadRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    if req.format.lower() == 'pdf':
+        pdf_buffer = inference.generate_resume_pdf(req.resume)
+        return FileResponse(
+            iter([pdf_buffer.getvalue()]),
+            media_type="application/pdf",
+            filename="resume.pdf"
+        )
+    elif req.format.lower() == 'docx':
+        docx_buffer = inference.generate_resume_docx(req.resume)
+        return FileResponse(
+            iter([docx_buffer.getvalue()]),
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            filename="resume.docx"
+        )
+    else:
+        raise HTTPException(status_code=400, detail="Format must be 'pdf' or 'docx'")
 
 if __name__ == "__main__":
     import uvicorn
