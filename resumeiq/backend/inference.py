@@ -792,72 +792,6 @@ def generate_resume_docx(resume_text: str, filename: str = "resume.docx") -> Byt
     buffer.seek(0)
     return buffer
 
-def check_grammar(resume_text: str) -> dict:
-    """Check grammar and spelling in resume"""
-    issues = []
-    suggestions = []
-
-    # Simple regex-based grammar checks
-    patterns = {
-        r'\b[A-Z]{2,}\b(?!\s[A-Z])': 'Acronym without explanation',
-        r'(\w+)\s+\1\b': 'Repeated word detected',
-        r'\s{2,}': 'Multiple spaces detected',
-        r'[,.:;!?]\s{0}': 'Missing space after punctuation',
-    }
-
-    for pattern, issue in patterns.items():
-        matches = re.finditer(pattern, resume_text)
-        for match in matches:
-            issues.append({
-                'type': issue,
-                'text': match.group(),
-                'position': match.start(),
-                'suggestion': f'Review: {issue}'
-            })
-
-    # Check for common resume errors
-    common_errors = {
-        'teh': 'the',
-        'recieve': 'receive',
-        'seperate': 'separate',
-        'occured': 'occurred',
-        'wich': 'which',
-        'managment': 'management',
-        'responsiblity': 'responsibility',
-    }
-
-    text_lower = resume_text.lower()
-    for error, correction in common_errors.items():
-        if error in text_lower:
-            pos = text_lower.find(error)
-            issues.append({
-                'type': 'Spelling Error',
-                'text': error,
-                'position': pos,
-                'suggestion': f'Did you mean: {correction}?'
-            })
-            suggestions.append(f'Replace "{error}" with "{correction}"')
-
-    # Check for weak action verbs
-    weak_verbs = ['helped', 'worked', 'did', 'made', 'handled', 'responsible for']
-    strong_verbs = ['Led', 'Developed', 'Implemented', 'Designed', 'Managed', 'Drove']
-
-    for weak in weak_verbs:
-        if weak.lower() in text_lower:
-            suggestions.append(f'Replace "{weak}" with stronger verb like "{strong_verbs[weak_verbs.index(weak)]}"')
-
-    score = 100 - (len(issues) * 5) - (len(suggestions) * 3)
-    score = max(0, min(100, score))
-
-    return {
-        'grammar_score': score,
-        'issues_found': len(issues),
-        'issues': issues[:10],  # Limit to 10 issues
-        'suggestions': suggestions[:5],  # Limit to 5 suggestions
-        'overall_feedback': 'Good grammar!' if score >= 80 else 'Needs improvement' if score >= 60 else 'Multiple issues found'
-    }
-
-def batch_match_jobs(resume_text: str, job_descriptions: List[str]) -> dict:
     """Compare resume against multiple job descriptions"""
     results = []
 
@@ -1020,32 +954,166 @@ def find_mentors(target_role: str, expertise_areas: List[str], user_experience: 
         'recommended_search': f'Mentors specializing in {target_role}'
     }
 
-def match_mentor(user_skills: List[str], user_goal: str, user_experience: int) -> dict:
-    """Get mentor recommendations based on user profile"""
-    recommended_expertise = []
+def optimize_linkedin(headline: str, about_section: str, skills: List[str], target_role: str) -> dict:
+    """Optimize LinkedIn profile for recruiter visibility"""
+    prompt = f"""Optimize this LinkedIn profile for the {target_role} role.
 
-    # Determine mentorship areas
-    if 'data scientist' in ' '.join(user_skills).lower():
-        recommended_expertise.append('Data Science')
-    if 'software' in ' '.join(user_skills).lower():
-        recommended_expertise.append('Software Development')
-    if 'leadership' in user_goal.lower():
-        recommended_expertise.append('Career Leadership')
+Current Headline: {headline}
+About Section: {about_section}
+Current Skills: {', '.join(skills[:10])}
+Target Role: {target_role}
 
-    if not recommended_expertise:
-        recommended_expertise = ['General Career Coaching']
+Return JSON with:
+- optimized_headline (compelling, keyword-rich, role-specific)
+- optimized_about (2-3 sentences, impact-driven, recruiter-friendly)
+- suggested_keywords (list of 8-10 keywords to add)
+- missing_skills (important skills for this role not listed)
+- improvements (list of 3-4 specific changes made)
+
+JSON Response:"""
+
+    response = infer(prompt, max_tokens=500)
+    result = parse_json_response(response)
+
+    # Calculate profile strength score
+    strength_score = 50
+    if result.get("optimized_headline"):
+        strength_score += 15
+    if result.get("optimized_about"):
+        strength_score += 15
+    if len(result.get("suggested_keywords", [])) > 5:
+        strength_score += 10
+    if len(skills) >= 10:
+        strength_score += 10
 
     return {
-        'user_profile': {
-            'current_skills': user_skills,
-            'goal': user_goal,
-            'experience_years': user_experience
-        },
-        'recommended_expertise': recommended_expertise,
-        'ideal_mentor_traits': [
-            f'Experience in {recommended_expertise[0]}',
-            'Active in mentoring',
-            'Availability for regular sessions'
-        ],
-        'mentorship_focus': f'Help you transition into {user_goal}'
+        "optimized_headline": result.get("optimized_headline", f"{headline} | {target_role}"),
+        "optimized_about": result.get("optimized_about", "Passionate professional with expertise in delivering results."),
+        "suggested_keywords": result.get("suggested_keywords", ["Strategic", "Leadership", "Innovation", "Results-driven"]),
+        "missing_skills": result.get("missing_skills", ["Project Management", "Stakeholder Communication"]),
+        "profile_strength_score": min(100, strength_score),
+        "improvements": result.get("improvements", [
+            "Added role-specific keywords for better recruiter visibility",
+            "Optimized headline for ATS and search ranking",
+            "Highlighted measurable achievements in About section",
+            "Included strategic keywords for your target role"
+        ])
+    }
+
+def generate_star_response(question: str, difficulty: str = "medium", domain: str = None) -> dict:
+    """Generate STAR method interview response"""
+    domain_context = f" for a {domain} professional" if domain else ""
+
+    prompt = f"""Generate a professional STAR interview response{domain_context} to this behavioral question.
+
+Difficulty Level: {difficulty}
+Question: {question}
+
+Return JSON with:
+- situation (2-3 sentences describing the context)
+- task (1-2 sentences explaining the challenge/responsibility)
+- action (3-4 sentences describing specific actions taken)
+- result (2-3 sentences with quantified outcomes and impact)
+
+JSON Response:"""
+
+    response = infer(prompt, max_tokens=600)
+    result = parse_json_response(response)
+
+    full_answer = f"{result.get('situation', '')} {result.get('task', '')} {result.get('action', '')} {result.get('result', '')}"
+
+    return {
+        "situation": result.get("situation", "In my previous role..."),
+        "task": result.get("task", "I was tasked with..."),
+        "action": result.get("action", "I took the following steps..."),
+        "result": result.get("result", "As a result, we achieved..."),
+        "full_answer": full_answer,
+        "difficulty_tag": difficulty.capitalize()
+    }
+
+def generate_email_template(template_type: str, user_name: str, company_name: str, role: str, context: str = "") -> dict:
+    """Generate professional career-related email templates"""
+    template_instructions = {
+        "job_outreach": "Write a compelling job application outreach email",
+        "follow_up": "Write a professional follow-up email after interview",
+        "networking": "Write a thoughtful networking request email",
+        "internship": "Write an internship inquiry email",
+        "rejection_response": "Write a professional rejection response email"
+    }
+
+    instruction = template_instructions.get(template_type, "Write a professional email")
+
+    prompt = f"""{instruction}.
+
+User Name: {user_name}
+Company: {company_name}
+Role: {role}
+Additional Context: {context}
+
+Return JSON with:
+- subject_line (compelling, specific subject)
+- email_body (professional 150-250 word email body)
+- tips (list of 3-4 tips for sending this type of email)
+
+JSON Response:"""
+
+    response = infer(prompt, max_tokens=500)
+    result = parse_json_response(response)
+
+    return {
+        "subject_line": result.get("subject_line", f"Interested in {role} at {company_name}"),
+        "email_body": result.get("email_body", f"Hi,\n\nI am interested in the {role} position at {company_name}."),
+        "tips": result.get("tips", [
+            "Personalize with specific details from company research",
+            "Keep subject line clear and action-oriented",
+            "Use professional but warm tone",
+            "Include clear call-to-action"
+        ])
+    }
+
+def batch_match_jobs(resume_text: str, job_descriptions: List[str]) -> dict:
+    """Compare resume against multiple job descriptions"""
+    results = []
+
+    resume_skills = extract_skills(resume_text)
+
+    for idx, job_desc in enumerate(job_descriptions, 1):
+        job_skills = extract_skills(job_desc)
+        matched_skills = resume_skills & job_skills
+        missing_skills = job_skills - resume_skills
+
+        if len(job_skills) == 0:
+            match_percentage = 50
+        else:
+            match_percentage = int((len(matched_skills) / len(job_skills)) * 100)
+
+        # Calculate score
+        if len(missing_skills) > len(job_skills) * 0.7:
+            score = 3 + (match_percentage / 50)
+        elif len(missing_skills) > len(job_skills) * 0.5:
+            score = 5 + (match_percentage / 50)
+        elif len(missing_skills) > len(job_skills) * 0.2:
+            score = 6 + (match_percentage / 100)
+        else:
+            score = 8 + (match_percentage / 200)
+
+        score = round(min(10, max(3, score)), 1)
+
+        results.append({
+            'job_index': idx,
+            'match_score': score,
+            'match_percentage': match_percentage,
+            'skills_matched': list(matched_skills)[:5],
+            'skills_missing': list(missing_skills)[:5],
+            'fit_level': 'Excellent' if score >= 8 else 'Good' if score >= 6 else 'Fair' if score >= 4 else 'Poor'
+        })
+
+    # Sort by match score
+    results_sorted = sorted(results, key=lambda x: x['match_score'], reverse=True)
+
+    return {
+        'total_jobs': len(job_descriptions),
+        'best_matches': results_sorted[:3],
+        'all_results': results_sorted,
+        'avg_score': round(sum(r['match_score'] for r in results) / len(results), 1) if results else 0
     }

@@ -177,16 +177,6 @@ class ResumeVersionResult(BaseModel):
     word_count: int
     skills_identified: int
 
-class GrammarCheckRequest(BaseModel):
-    resume: str
-
-class GrammarCheckResult(BaseModel):
-    grammar_score: float
-    issues_found: int
-    issues: List[dict]
-    suggestions: List[str]
-    overall_feedback: str
-
 class BatchJobMatchRequest(BaseModel):
     resume: str
     job_descriptions: List[str]
@@ -199,7 +189,7 @@ class BatchJobMatchResult(BaseModel):
 
 class ResumeDownloadRequest(BaseModel):
     resume: str
-    format: str  # 'pdf' or 'docx'
+    format: str  # 'pdf', 'docx', or 'txt'
 
 class AchievementRequest(BaseModel):
     analysis_count: int
@@ -212,18 +202,67 @@ class AchievementResult(BaseModel):
     progress: dict
     next_badge: str
 
-class MentorSearchRequest(BaseModel):
+class LinkedInOptimizerRequest(BaseModel):
+    headline: str
+    about_section: str
+    skills: List[str]
     target_role: str
-    expertise_areas: List[str]
-    min_experience: int = 0
 
-class MentorMatchRequest(BaseModel):
-    current_skills: List[str]
-    goal: str
-    experience_years: int
+class LinkedInOptimizerResult(BaseModel):
+    optimized_headline: str
+    optimized_about: str
+    suggested_keywords: List[str]
+    missing_skills: List[str]
+    profile_strength_score: float
+    improvements: List[str]
 
-class MentorMatchResult(BaseModel):
-    user_profile: dict
-    recommended_expertise: List[str]
-    ideal_mentor_traits: List[str]
-    mentorship_focus: str
+class StarResponseRequest(BaseModel):
+    question: str
+    difficulty: str = "medium"
+    domain: Optional[str] = None
+
+class StarResponseResult(BaseModel):
+    situation: str
+    task: str
+    action: str
+    result: str
+    full_answer: str
+    difficulty_tag: str
+
+class EmailTemplateRequest(BaseModel):
+    template_type: str
+    user_name: str
+    company_name: str
+    role: str
+    additional_context: Optional[str] = None
+
+class EmailTemplateResult(BaseModel):
+    subject_line: str
+    email_body: str
+    tips: List[str]
+
+class PortfolioItemRequest(BaseModel):
+    title: str
+    description: str
+    technologies: List[str]
+    github_link: Optional[str] = None
+    demo_link: Optional[str] = None
+    domain: str
+
+class PortfolioItemResult(BaseModel):
+    id: int
+    title: str
+    description: str
+    technologies: List[str]
+    github_link: Optional[str]
+    demo_link: Optional[str]
+    domain: str
+    created_at: datetime
+
+class PortfolioShowcaseRequest(BaseModel):
+    domain: Optional[str] = None
+
+class PortfolioShowcaseResult(BaseModel):
+    projects: List[PortfolioItemResult]
+    total_count: int
+    domains: List[str]

@@ -2,28 +2,8 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { sidebarVariants } from './animations'
 import { useResume } from '../hooks/useResume'
-
-const menuItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-  { id: 'resume', label: 'My Resume', icon: '📂', alwaysEnabled: true },
-  { id: 'templates', label: 'Resume Templates', icon: '🎨' },
-  { id: 'analyze', label: 'Resume Analyzer', icon: '📄' },
-  { id: 'matcher', label: 'Job Matcher', icon: '🎯' },
-  { id: 'batch-match', label: 'Batch Job Matching', icon: '🔍' },
-  { id: 'rewriter', label: 'Resume Rewriter', icon: '✍️' },
-  { id: 'cover-letter', label: 'Cover Letter', icon: '📝' },
-  { id: 'interview', label: 'Interview Coach', icon: '🎤' },
-  { id: 'learning', label: 'Learning Path', icon: '📚' },
-  { id: 'keyword-optimizer', label: 'Keyword Optimizer', icon: '🔑' },
-  { id: 'ats-score', label: 'ATS Score', icon: '📋' },
-  { id: 'skill-gap', label: 'Skill Gap Analysis', icon: '🎓' },
-  { id: 'compare', label: 'Resume Comparison', icon: '📊' },
-  { id: 'versioning', label: 'Resume Versioning', icon: '📌' },
-  { id: 'grammar-check', label: 'Grammar Check', icon: '✏️' },
-  { id: 'download', label: 'Download Resume', icon: '📥' },
-  { id: 'achievements', label: 'Achievements', icon: '🏆' },
-  { id: 'mentorship', label: 'Mentorship', icon: '👥' },
-]
+import { MenuGroup } from './MenuGroup'
+import { navConfig } from '../config/navConfig'
 
 export const Sidebar = ({ isOpen, currentPage, onNavigate, onClose }) => {
   const { resume } = useResume()
@@ -56,38 +36,54 @@ export const Sidebar = ({ isOpen, currentPage, onNavigate, onClose }) => {
           <p className="text-xs text-gray-500">Career Intelligence</p>
         </motion.div>
 
-        <nav className="space-y-2">
-          {menuItems.map((item) => {
-            const isEnabled = item.alwaysEnabled || resume
-            const isDisabled = !isEnabled
+        {/* Navigation */}
+        <nav className="space-y-3">
+          {navConfig.map((item) => {
+            if (item.type === 'group') {
+              return (
+                <MenuGroup
+                  key={item.id}
+                  group={item}
+                  currentPage={currentPage}
+                  onNavigate={onNavigate}
+                  resume={resume}
+                  onClose={onClose}
+                />
+              )
+            } else {
+              const isEnabled = item.alwaysEnabled || resume
+              const isDisabled = !isEnabled
+              const isActive = currentPage === item.id
 
-            return (
-              <motion.button
-                key={item.id}
-                onClick={() => {
-                  if (!isDisabled) {
-                    onNavigate(item.id)
-                    onClose()
-                  }
-                }}
-                className={`w-full text-left px-4 py-3 rounded-lg transition-all flex items-center gap-3 ${
-                  isDisabled
-                    ? 'opacity-40 cursor-not-allowed bg-gray-900 text-gray-600'
-                    : currentPage === item.id
-                    ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/50'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                }`}
-                whileHover={!isDisabled ? { x: 5 } : {}}
-                whileTap={!isDisabled ? { scale: 0.98 } : {}}
-                title={isDisabled ? 'Upload resume to unlock' : ''}
-              >
-                <span className="text-lg flex-shrink-0">{item.icon}</span>
-                <span className="font-medium text-sm">{item.label}</span>
-              </motion.button>
-            )
+              return (
+                <motion.button
+                  key={item.id}
+                  onClick={() => {
+                    if (!isDisabled) {
+                      onNavigate(item.id)
+                      onClose()
+                    }
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-lg transition-all flex items-center gap-3 ${
+                    isDisabled
+                      ? 'opacity-40 cursor-not-allowed bg-gray-900 text-gray-600'
+                      : isActive
+                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/50'
+                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  }`}
+                  whileHover={!isDisabled ? { x: 5 } : {}}
+                  whileTap={!isDisabled ? { scale: 0.98 } : {}}
+                  title={isDisabled ? 'Upload resume to unlock' : ''}
+                >
+                  <span className="text-lg flex-shrink-0">{item.icon}</span>
+                  <span className="font-medium text-sm">{item.label}</span>
+                </motion.button>
+              )
+            }
           })}
         </nav>
 
+        {/* Resume Status */}
         {!resume && (
           <motion.div
             className="mt-auto pt-6 border-t border-gray-800"
@@ -116,4 +112,3 @@ export const Sidebar = ({ isOpen, currentPage, onNavigate, onClose }) => {
     </>
   )
 }
-

@@ -15,7 +15,7 @@ export const ResumeProvider = ({ children }) => {
   const API_BASE = 'http://localhost:8000'
 
   useEffect(() => {
-    if (token) {
+    if (token && token !== 'null' && token !== '') {
       loadCurrentResume()
     }
   }, [token])
@@ -43,6 +43,10 @@ export const ResumeProvider = ({ children }) => {
       const formData = new FormData()
       formData.append('file', file)
 
+      if (!token || token === 'null' || token === '') {
+        throw new Error('No authentication token. Please login again.')
+      }
+
       const response = await fetch(`${API_BASE}/api/resumes/upload`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
@@ -50,7 +54,8 @@ export const ResumeProvider = ({ children }) => {
       })
 
       if (!response.ok) {
-        throw new Error('Upload failed')
+        const errorData = await response.json().catch(() => ({ detail: 'Upload failed' }))
+        throw new Error(errorData.detail || `Upload failed with status ${response.status}`)
       }
 
       const data = await response.json()

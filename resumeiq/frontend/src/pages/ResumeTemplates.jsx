@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardTitle, CardContent } from '../components/Card'
 import { useResume } from '../hooks/useResume'
+import { useAuth } from '../hooks/useAuth'
 import { pageVariants, containerVariants, itemVariants } from '../components/animations'
 
 const templates = [
@@ -15,26 +16,63 @@ const templates = [
     id: 'classic',
     name: 'Classic',
     description: 'Professional, traditional format for corporate roles',
-    styles: 'border-l-4 border-gray-900 pl-6 py-2 font-serif text-gray-800'
+    styles: 'bg-gray-100 text-gray-900 border-l-4 border-blue-600 pl-6 py-2 font-serif'
   },
   {
     id: 'minimal',
     name: 'Minimal',
     description: 'Minimalist design for creative professionals',
-    styles: 'bg-gray-50 text-gray-700 p-6 font-sans tracking-tight'
+    styles: 'bg-gray-50 text-gray-900 p-6 font-sans tracking-tight'
   }
 ]
 
 export const ResumeTemplates = () => {
   const [selectedTemplate, setSelectedTemplate] = useState('modern')
+  const [isDownloading, setIsDownloading] = useState(false)
   const { resume } = useResume()
+  const { token } = useAuth()
 
-  const handleDownload = (format) => {
+  const handleDownload = async (format) => {
     if (!resume) {
       alert('Please upload a resume first')
       return
     }
-    alert(`Downloading as ${format}... Feature coming soon!`)
+
+    setIsDownloading(true)
+    try {
+      const response = await fetch('http://localhost:8000/api/download-resume', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          resume: resume,
+          format: format.toLowerCase()
+        })
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Download failed: ${response.status} - ${errorText}`)
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `resume_${selectedTemplate}.${format === 'PDF' ? 'pdf' : format === 'DOCX' ? 'docx' : 'txt'}`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      alert(`Resume downloaded as ${format}!`)
+    } catch (error) {
+      console.error('Download error:', error)
+      alert(`Error downloading resume: ${error.message}`)
+    } finally {
+      setIsDownloading(false)
+    }
   }
 
   return (
@@ -98,11 +136,12 @@ export const ResumeTemplates = () => {
                   <motion.button
                     key={format}
                     onClick={() => handleDownload(format)}
-                    className="btn-primary text-sm"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    disabled={isDownloading}
+                    className={`btn-primary text-sm ${isDownloading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    whileHover={!isDownloading ? { scale: 1.05 } : {}}
+                    whileTap={!isDownloading ? { scale: 0.95 } : {}}
                   >
-                    📄 Download {format}
+                    {isDownloading ? '⏳ Downloading...' : `📄 Download ${format}`}
                   </motion.button>
                 ))}
               </CardContent>

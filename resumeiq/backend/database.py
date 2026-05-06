@@ -98,37 +98,6 @@ class UserStreak(Base):
 
     user = relationship("User")
 
-class Mentor(Base):
-    __tablename__ = "mentors"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
-    expertise = Column(String)  # JSON-like string of expertise areas
-    bio = Column(Text)
-    years_experience = Column(Integer)
-    hourly_rate = Column(Integer, default=0)  # 0 = free
-    availability = Column(String)  # available_now, weekends, etc
-    is_verified = Column(Boolean, default=False)
-    rating = Column(Integer, default=0)  # 0-5
-    total_mentees = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    user = relationship("User")
-
-class MentorConnection(Base):
-    __tablename__ = "mentor_connections"
-
-    id = Column(Integer, primary_key=True, index=True)
-    mentee_id = Column(Integer, ForeignKey("users.id"))
-    mentor_id = Column(Integer, ForeignKey("mentors.id"))
-    status = Column(String, default="pending")  # pending, connected, completed
-    goal = Column(Text)
-    started_at = Column(DateTime, default=datetime.utcnow)
-    messages_count = Column(Integer, default=0)
-
-    mentee = relationship("User")
-    mentor = relationship("Mentor")
-
 def get_db():
     db = SessionLocal()
     try:

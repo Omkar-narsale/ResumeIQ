@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Header, UploadFile, File
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
@@ -9,16 +9,17 @@ import bcrypt
 import os
 from dotenv import load_dotenv
 
-from database import get_db, init_db, User, Analysis, Resume, InterviewSession, Achievement, UserStreak, Mentor, MentorConnection
+from database import get_db, init_db, User, Analysis, Resume, InterviewSession, Achievement, UserStreak
 from models import (
     UserSignup, UserLogin, Token, UserResponse, AnalysisRequest, AnalysisResult,
     RewriteRequest, RewriteResult, MatchRequest, MatchResult, InterviewRequest,
     InterviewResult, InterviewAnswerRequest, InterviewAnswerResult, RoadmapRequest, RoadmapResult, CoverLetterRequest, CoverLetterResult, AnalysisHistory, ResumeInfo, CurrentResume,
     KeywordOptimizerRequest, KeywordOptimizerResult, ATSScoreRequest, ATSScoreResult,
     SkillGapRequest, SkillGapResult, ResumeComparisonRequest, ResumeComparisonResult,
-    ResumeVersionRequest, ResumeVersionResult, GrammarCheckRequest, GrammarCheckResult,
+    ResumeVersionRequest, ResumeVersionResult,
     BatchJobMatchRequest, BatchJobMatchResult, ResumeDownloadRequest, AchievementRequest, AchievementResult,
-    MentorSearchRequest, MentorMatchRequest, MentorMatchResult
+    LinkedInOptimizerRequest, LinkedInOptimizerResult, StarResponseRequest, StarResponseResult,
+    EmailTemplateRequest, EmailTemplateResult
 )
 from extract_text import extract_text_from_pdf
 import inference
@@ -395,24 +396,6 @@ async def compare_resumes(req: ResumeComparisonRequest, authorization: str = Hea
 
     return result
 
-@app.post("/api/grammar-check", response_model=GrammarCheckResult)
-async def grammar_check(req: GrammarCheckRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
-    token = authorization.replace("Bearer ", "")
-    user = get_current_user(token, db)
-
-    result = inference.check_grammar(req.resume)
-
-    analysis = Analysis(
-        user_id=user.id,
-        type="grammar_check",
-        input_text=req.resume[:500],
-        result=result
-    )
-    db.add(analysis)
-    db.commit()
-
-    return result
-
 @app.post("/api/batch-match-jobs", response_model=BatchJobMatchResult)
 async def batch_match_jobs(req: BatchJobMatchRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
     token = authorization.replace("Bearer ", "")
@@ -438,20 +421,27 @@ async def download_resume(req: ResumeDownloadRequest, authorization: str = Heade
 
     if req.format.lower() == 'pdf':
         pdf_buffer = inference.generate_resume_pdf(req.resume)
-        return FileResponse(
+        return StreamingResponse(
             iter([pdf_buffer.getvalue()]),
             media_type="application/pdf",
-            filename="resume.pdf"
+            headers={"Content-Disposition": "attachment; filename=resume.pdf"}
         )
     elif req.format.lower() == 'docx':
         docx_buffer = inference.generate_resume_docx(req.resume)
-        return FileResponse(
+        return StreamingResponse(
             iter([docx_buffer.getvalue()]),
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            filename="resume.docx"
+            headers={"Content-Disposition": "attachment; filename=resume.docx"}
+        )
+    elif req.format.lower() == 'txt':
+        txt_content = req.resume.encode('utf-8')
+        return StreamingResponse(
+            iter([txt_content]),
+            media_type="text/plain",
+            headers={"Content-Disposition": "attachment; filename=resume.txt"}
         )
     else:
-        raise HTTPException(status_code=400, detail="Format must be 'pdf' or 'docx'")
+        raise HTTPException(status_code=400, detail="Format must be 'pdf', 'docx', or 'txt'")
 
 @app.post("/api/achievements", response_model=AchievementResult)
 async def get_achievements(req: AchievementRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
@@ -459,6 +449,60 @@ async def get_achievements(req: AchievementRequest, authorization: str = Header(
     user = get_current_user(token, db)
 
     result = inference.check_achievements(req.analysis_count, req.streak_days, req.features_used)
+
+    return result
+
+@app.post("/api/linkedin-optimizer", response_model=LinkedInOptimizerResult)
+async def optimize_linkedin(req: LinkedInOptimizerRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    result = inference.optimize_linkedin(req.headline, req.about_section, req.skills, req.target_role)
+
+    analysis = Analysis(
+        user_id=user.id,
+        type="linkedin_optimizer",
+        input_text=req.target_role,
+        result=result
+    )
+    db.add(analysis)
+    db.commit()
+
+    return result
+
+@app.post("/api/star-response", response_model=StarResponseResult)
+async def generate_star_response(req: StarResponseRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    result = inference.generate_star_response(req.question, req.difficulty, req.domain)
+
+    analysis = Analysis(
+        user_id=user.id,
+        type="star_response",
+        input_text=req.question[:500],
+        result=result
+    )
+    db.add(analysis)
+    db.commit()
+
+    return result
+
+@app.post("/api/email-template", response_model=EmailTemplateResult)
+async def generate_email_template(req: EmailTemplateRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    result = inference.generate_email_template(req.template_type, req.user_name, req.company_name, req.role, req.additional_context or "")
+
+    analysis = Analysis(
+        user_id=user.id,
+        type="email_template",
+        input_text=f"{req.template_type}_{req.company_name}",
+        result=result
+    )
+    db.add(analysis)
+    db.commit()
 
     return result
 
@@ -500,62 +544,6 @@ async def get_user_streak(authorization: str = Header(...), db: Session = Depend
         "current_streak": streak.current_streak,
         "longest_streak": streak.longest_streak,
         "total_activities": streak.total_activities
-    }
-
-@app.post("/api/mentor/match", response_model=MentorMatchResult)
-async def match_mentor(req: MentorMatchRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
-    token = authorization.replace("Bearer ", "")
-    user = get_current_user(token, db)
-
-    result = inference.match_mentor(req.current_skills, req.goal, req.experience_years)
-
-    return result
-
-@app.get("/api/mentors/available")
-async def get_available_mentors(authorization: str = Header(...), db: Session = Depends(get_db)):
-    token = authorization.replace("Bearer ", "")
-    user = get_current_user(token, db)
-
-    mentors = db.query(Mentor).filter(Mentor.is_verified == True).limit(10).all()
-
-    return {
-        "total_mentors": len(mentors),
-        "mentors": [
-            {
-                "id": m.id,
-                "expertise": m.expertise,
-                "years_experience": m.years_experience,
-                "hourly_rate": m.hourly_rate,
-                "rating": m.rating,
-                "total_mentees": m.total_mentees,
-                "availability": m.availability
-            }
-            for m in mentors
-        ]
-    }
-
-@app.post("/api/mentor/request/{mentor_id}")
-async def request_mentor(mentor_id: int, goal: str = None, authorization: str = Header(...), db: Session = Depends(get_db)):
-    token = authorization.replace("Bearer ", "")
-    user = get_current_user(token, db)
-
-    mentor = db.query(Mentor).filter(Mentor.id == mentor_id).first()
-    if not mentor:
-        raise HTTPException(status_code=404, detail="Mentor not found")
-
-    connection = MentorConnection(
-        mentee_id=user.id,
-        mentor_id=mentor_id,
-        goal=goal or "Career guidance",
-        status="pending"
-    )
-    db.add(connection)
-    db.commit()
-
-    return {
-        "success": True,
-        "status": "pending",
-        "message": "Mentorship request sent successfully"
     }
 
 if __name__ == "__main__":

@@ -13,12 +13,16 @@ export const useApi = () => {
     setLoading(true)
     setError(null)
     try {
+      if (!token || token === 'null' || token === '') {
+        throw new Error('No authentication token. Please login again.')
+      }
+
       const config = {
         method,
         url: `${API_BASE}${endpoint}`,
         headers: {
           'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` })
+          'Authorization': `Bearer ${token}`
         }
       }
       if (data) config.data = data

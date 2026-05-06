@@ -16,11 +16,9 @@ import { ATSScore } from './pages/ATSScore'
 import { SkillGapAnalyzer } from './pages/SkillGapAnalyzer'
 import { ResumeComparison } from './pages/ResumeComparison'
 import { ResumeVersioning } from './pages/ResumeVersioning'
-import { GrammarCheck } from './pages/GrammarCheck'
 import { BatchJobMatch } from './pages/BatchJobMatch'
-import { ResumeDownload } from './pages/ResumeDownload'
 import { Achievements } from './pages/Achievements'
-import { Mentorship } from './pages/Mentorship'
+import { CareerToolkit } from './pages/CareerToolkit'
 import { Navbar } from './components/Navbar'
 import { Sidebar } from './components/Sidebar'
 
@@ -45,10 +43,11 @@ function MainApp() {
       case 'skill-gap': return <SkillGapAnalyzer />
       case 'compare': return <ResumeComparison />
       case 'versioning': return <ResumeVersioning />
-      case 'grammar-check': return <GrammarCheck />
-      case 'download': return <ResumeDownload />
       case 'achievements': return <Achievements />
-      case 'mentorship': return <Mentorship />
+      case 'linkedin-optimizer': return <CareerToolkit initialTab="linkedin" />
+      case 'star-responses': return <CareerToolkit initialTab="star" />
+      case 'email-templates': return <CareerToolkit initialTab="email" />
+      case 'portfolio-showcase': return <CareerToolkit initialTab="portfolio" />
       default: return <Dashboard onNavigate={setCurrentPage} />
     }
   }
