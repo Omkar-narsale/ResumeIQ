@@ -21,6 +21,8 @@ const menuItems = [
   { id: 'versioning', label: 'Resume Versioning', icon: '📌' },
   { id: 'grammar-check', label: 'Grammar Check', icon: '✏️' },
   { id: 'download', label: 'Download Resume', icon: '📥' },
+  { id: 'achievements', label: 'Achievements', icon: '🏆' },
+  { id: 'mentorship', label: 'Mentorship', icon: '👥' },
 ]
 
 export const Sidebar = ({ isOpen, currentPage, onNavigate, onClose }) => {

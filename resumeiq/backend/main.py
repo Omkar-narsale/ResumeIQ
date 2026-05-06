@@ -8,7 +8,7 @@ import bcrypt
 import os
 from dotenv import load_dotenv
 
-from database import get_db, init_db, User, Analysis, Resume, InterviewSession
+from database import get_db, init_db, User, Analysis, Resume, InterviewSession, Achievement, UserStreak, Mentor, MentorConnection
 from models import (
     UserSignup, UserLogin, Token, UserResponse, AnalysisRequest, AnalysisResult,
     RewriteRequest, RewriteResult, MatchRequest, MatchResult, InterviewRequest,
@@ -16,7 +16,8 @@ from models import (
     KeywordOptimizerRequest, KeywordOptimizerResult, ATSScoreRequest, ATSScoreResult,
     SkillGapRequest, SkillGapResult, ResumeComparisonRequest, ResumeComparisonResult,
     ResumeVersionRequest, ResumeVersionResult, GrammarCheckRequest, GrammarCheckResult,
-    BatchJobMatchRequest, BatchJobMatchResult, ResumeDownloadRequest
+    BatchJobMatchRequest, BatchJobMatchResult, ResumeDownloadRequest, AchievementRequest, AchievementResult,
+    MentorSearchRequest, MentorMatchRequest, MentorMatchResult
 )
 from extract_text import extract_text_from_pdf
 import inference
@@ -450,6 +451,111 @@ async def download_resume(req: ResumeDownloadRequest, authorization: str = Heade
         )
     else:
         raise HTTPException(status_code=400, detail="Format must be 'pdf' or 'docx'")
+
+@app.post("/api/achievements", response_model=AchievementResult)
+async def get_achievements(req: AchievementRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    result = inference.check_achievements(req.analysis_count, req.streak_days, req.features_used)
+
+    return result
+
+@app.get("/api/user-badges")
+async def get_user_badges(authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    badges = db.query(Achievement).filter(Achievement.user_id == user.id).all()
+
+    return {
+        "total_badges": len(badges),
+        "badges": [
+            {
+                "badge_name": b.badge_name,
+                "description": b.description,
+                "icon": b.icon,
+                "unlocked_at": b.unlocked_at
+            }
+            for b in badges
+        ]
+    }
+
+@app.get("/api/user-streak")
+async def get_user_streak(authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    streak = db.query(UserStreak).filter(UserStreak.user_id == user.id).first()
+
+    if not streak:
+        return {
+            "current_streak": 0,
+            "longest_streak": 0,
+            "total_activities": 0
+        }
+
+    return {
+        "current_streak": streak.current_streak,
+        "longest_streak": streak.longest_streak,
+        "total_activities": streak.total_activities
+    }
+
+@app.post("/api/mentor/match", response_model=MentorMatchResult)
+async def match_mentor(req: MentorMatchRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    result = inference.match_mentor(req.current_skills, req.goal, req.experience_years)
+
+    return result
+
+@app.get("/api/mentors/available")
+async def get_available_mentors(authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    mentors = db.query(Mentor).filter(Mentor.is_verified == True).limit(10).all()
+
+    return {
+        "total_mentors": len(mentors),
+        "mentors": [
+            {
+                "id": m.id,
+                "expertise": m.expertise,
+                "years_experience": m.years_experience,
+                "hourly_rate": m.hourly_rate,
+                "rating": m.rating,
+                "total_mentees": m.total_mentees,
+                "availability": m.availability
+            }
+            for m in mentors
+        ]
+    }
+
+@app.post("/api/mentor/request/{mentor_id}")
+async def request_mentor(mentor_id: int, goal: str = None, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    mentor = db.query(Mentor).filter(Mentor.id == mentor_id).first()
+    if not mentor:
+        raise HTTPException(status_code=404, detail="Mentor not found")
+
+    connection = MentorConnection(
+        mentee_id=user.id,
+        mentor_id=mentor_id,
+        goal=goal or "Career guidance",
+        status="pending"
+    )
+    db.add(connection)
+    db.commit()
+
+    return {
+        "success": True,
+        "status": "pending",
+        "message": "Mentorship request sent successfully"
+    }
 
 if __name__ == "__main__":
     import uvicorn

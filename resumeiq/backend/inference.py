@@ -903,3 +903,149 @@ def batch_match_jobs(resume_text: str, job_descriptions: List[str]) -> dict:
         'all_results': results_sorted,
         'avg_score': round(sum(r['match_score'] for r in results) / len(results), 1) if results else 0
     }
+
+def check_achievements(user_analysis_count: int, user_streak_days: int, features_used: List[str]) -> dict:
+    """Check and unlock achievements for user"""
+    unlocked = []
+    progress = {}
+
+    # Define badges
+    badges = {
+        'first_analysis': {
+            'name': '🎯 First Step',
+            'description': 'Completed your first resume analysis',
+            'icon': '🎯',
+            'condition': user_analysis_count >= 1
+        },
+        'analyzer_pro': {
+            'name': '📊 Analysis Pro',
+            'description': 'Completed 10 resume analyses',
+            'icon': '📊',
+            'condition': user_analysis_count >= 10
+        },
+        'streak_3': {
+            'name': '🔥 On Fire',
+            'description': 'Maintained 3-day streak',
+            'icon': '🔥',
+            'condition': user_streak_days >= 3
+        },
+        'streak_7': {
+            'name': '⚡ Week Warrior',
+            'description': 'Maintained 7-day streak',
+            'icon': '⚡',
+            'condition': user_streak_days >= 7
+        },
+        'streak_30': {
+            'name': '👑 Unstoppable',
+            'description': 'Maintained 30-day streak',
+            'icon': '👑',
+            'condition': user_streak_days >= 30
+        },
+        'feature_explorer': {
+            'name': '🚀 Explorer',
+            'description': 'Used 5 different features',
+            'icon': '🚀',
+            'condition': len(features_used) >= 5
+        },
+        'all_features': {
+            'name': '💎 Master',
+            'description': 'Used all major features',
+            'icon': '💎',
+            'condition': len(features_used) >= 10
+        },
+        'grammar_master': {
+            'name': '✏️ Grammarian',
+            'description': 'Used grammar checker 5 times',
+            'icon': '✏️',
+            'condition': 'grammar_check' in features_used and features_used.count('grammar_check') >= 5
+        },
+        'batch_matcher': {
+            'name': '🔍 Job Seeker',
+            'description': 'Analyzed 5+ jobs in batch',
+            'icon': '🔍',
+            'condition': 'batch_job_match' in features_used and features_used.count('batch_job_match') >= 2
+        },
+    }
+
+    # Check which badges are unlocked
+    for badge_id, badge in badges.items():
+        if badge['condition']:
+            unlocked.append({
+                'id': badge_id,
+                'name': badge['name'],
+                'description': badge['description'],
+                'icon': badge['icon']
+            })
+
+    # Calculate progress for next badges
+    if user_analysis_count < 10:
+        progress['analyzer_pro'] = f"{user_analysis_count}/10"
+    if user_streak_days < 7:
+        progress['streak_7'] = f"{user_streak_days}/7"
+    if len(features_used) < 10:
+        progress['all_features'] = f"{len(features_used)}/10"
+
+    return {
+        'unlocked_badges': unlocked,
+        'total_unlocked': len(unlocked),
+        'progress': progress,
+        'next_badge': 'Complete 10 analyses to unlock "Analysis Pro"' if user_analysis_count < 10 else 'Maintain 7-day streak to unlock "Week Warrior"'
+    }
+
+def check_streak(user_last_activity: datetime) -> dict:
+    """Check and update user streak"""
+    today = datetime.utcnow().date()
+    last_date = user_last_activity.date() if user_last_activity else None
+
+    streak_active = (today - last_date).days <= 1 if last_date else False
+
+    return {
+        'streak_active': streak_active,
+        'last_activity': user_last_activity.isoformat() if user_last_activity else None,
+        'days_since_activity': (today - last_date).days if last_date else 0
+    }
+
+def find_mentors(target_role: str, expertise_areas: List[str], user_experience: int = 0) -> dict:
+    """Find suitable mentors based on role and expertise"""
+    # This would query the database in real implementation
+    # For now, return mock data structure
+    return {
+        'query': {
+            'target_role': target_role,
+            'expertise_areas': expertise_areas,
+            'min_experience': user_experience
+        },
+        'mentor_count': 0,
+        'top_matches': [],
+        'recommended_search': f'Mentors specializing in {target_role}'
+    }
+
+def match_mentor(user_skills: List[str], user_goal: str, user_experience: int) -> dict:
+    """Get mentor recommendations based on user profile"""
+    recommended_expertise = []
+
+    # Determine mentorship areas
+    if 'data scientist' in ' '.join(user_skills).lower():
+        recommended_expertise.append('Data Science')
+    if 'software' in ' '.join(user_skills).lower():
+        recommended_expertise.append('Software Development')
+    if 'leadership' in user_goal.lower():
+        recommended_expertise.append('Career Leadership')
+
+    if not recommended_expertise:
+        recommended_expertise = ['General Career Coaching']
+
+    return {
+        'user_profile': {
+            'current_skills': user_skills,
+            'goal': user_goal,
+            'experience_years': user_experience
+        },
+        'recommended_expertise': recommended_expertise,
+        'ideal_mentor_traits': [
+            f'Experience in {recommended_expertise[0]}',
+            'Active in mentoring',
+            'Availability for regular sessions'
+        ],
+        'mentorship_focus': f'Help you transition into {user_goal}'
+    }

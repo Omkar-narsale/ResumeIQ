@@ -19,6 +19,8 @@ import { ResumeVersioning } from './pages/ResumeVersioning'
 import { GrammarCheck } from './pages/GrammarCheck'
 import { BatchJobMatch } from './pages/BatchJobMatch'
 import { ResumeDownload } from './pages/ResumeDownload'
+import { Achievements } from './pages/Achievements'
+import { Mentorship } from './pages/Mentorship'
 import { Navbar } from './components/Navbar'
 import { Sidebar } from './components/Sidebar'
 
@@ -45,6 +47,8 @@ function MainApp() {
       case 'versioning': return <ResumeVersioning />
       case 'grammar-check': return <GrammarCheck />
       case 'download': return <ResumeDownload />
+      case 'achievements': return <Achievements />
+      case 'mentorship': return <Mentorship />
       default: return <Dashboard onNavigate={setCurrentPage} />
     }
   }

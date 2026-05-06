@@ -200,3 +200,30 @@ class BatchJobMatchResult(BaseModel):
 class ResumeDownloadRequest(BaseModel):
     resume: str
     format: str  # 'pdf' or 'docx'
+
+class AchievementRequest(BaseModel):
+    analysis_count: int
+    streak_days: int
+    features_used: List[str]
+
+class AchievementResult(BaseModel):
+    unlocked_badges: List[dict]
+    total_unlocked: int
+    progress: dict
+    next_badge: str
+
+class MentorSearchRequest(BaseModel):
+    target_role: str
+    expertise_areas: List[str]
+    min_experience: int = 0
+
+class MentorMatchRequest(BaseModel):
+    current_skills: List[str]
+    goal: str
+    experience_years: int
+
+class MentorMatchResult(BaseModel):
+    user_profile: dict
+    recommended_expertise: List[str]
+    ideal_mentor_traits: List[str]
+    mentorship_focus: str

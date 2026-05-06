@@ -73,6 +73,62 @@ class InterviewSession(Base):
         Index("idx_user_interview", "user_id", "created_at"),
     )
 
+class Achievement(Base):
+    __tablename__ = "achievements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    badge_type = Column(String)  # first_analysis, streak_7, all_features, etc
+    badge_name = Column(String)
+    description = Column(String)
+    icon = Column(String)
+    unlocked_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
+
+class UserStreak(Base):
+    __tablename__ = "user_streaks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    current_streak = Column(Integer, default=0)
+    longest_streak = Column(Integer, default=0)
+    last_activity = Column(DateTime, default=datetime.utcnow)
+    total_activities = Column(Integer, default=0)
+
+    user = relationship("User")
+
+class Mentor(Base):
+    __tablename__ = "mentors"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    expertise = Column(String)  # JSON-like string of expertise areas
+    bio = Column(Text)
+    years_experience = Column(Integer)
+    hourly_rate = Column(Integer, default=0)  # 0 = free
+    availability = Column(String)  # available_now, weekends, etc
+    is_verified = Column(Boolean, default=False)
+    rating = Column(Integer, default=0)  # 0-5
+    total_mentees = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
+
+class MentorConnection(Base):
+    __tablename__ = "mentor_connections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    mentee_id = Column(Integer, ForeignKey("users.id"))
+    mentor_id = Column(Integer, ForeignKey("mentors.id"))
+    status = Column(String, default="pending")  # pending, connected, completed
+    goal = Column(Text)
+    started_at = Column(DateTime, default=datetime.utcnow)
+    messages_count = Column(Integer, default=0)
+
+    mentee = relationship("User")
+    mentor = relationship("Mentor")
+
 def get_db():
     db = SessionLocal()
     try:
