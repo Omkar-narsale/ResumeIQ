@@ -335,8 +335,46 @@ ResumeIQ/
 │   └── start.bat                    # Windows startup script
 │
 ├── README.md                        # This file
-└── RESUME_ANALYZER_DOCS.md         # Technical documentation
+├── RESUME_ANALYZER_DOCS.md         # Technical documentation
+├── CAREER_TOOLKIT_TESTING.md       # Career toolkit test documentation
+├── RESUME_UPLOAD_TROUBLESHOOTING.md# Resume upload troubleshooting guide
+├── TOKEN_FIX.py                    # Token authentication fix utility
+└── resumeiq/backend/diagnostic.py  # Backend diagnostic & health check tool
 ```
+
+---
+
+## 🛠️ Utilities & Diagnostic Tools
+
+### Backend Diagnostic Tool (`resumeiq/backend/diagnostic.py`)
+Comprehensive system health check utility for diagnosing ResumeIQ backend issues:
+- **Model Status**: Check Hugging Face model loading and availability
+- **Database Health**: Verify SQLite database connectivity and schema
+- **Environment Validation**: Validate .env configuration and settings
+- **Dependency Check**: Ensure all required Python packages are installed
+- **Performance Metrics**: Monitor API response times and resource usage
+
+**Usage:**
+```bash
+cd resumeiq/backend
+python diagnostic.py
+```
+
+### Token Authentication Fix (`TOKEN_FIX.py`)
+Utility for resolving token authentication issues:
+- **Token Refresh**: Force refresh of authentication tokens
+- **Session Recovery**: Restore broken authentication sessions
+- **Token Validation**: Check token expiry and validity
+- **Auth Reset**: Reset authentication state for debugging
+
+**Usage:**
+```bash
+python TOKEN_FIX.py
+```
+
+### Testing & Documentation
+- **CAREER_TOOLKIT_TESTING.md**: Complete test suite and validation guide for Career Toolkit features
+- **RESUME_UPLOAD_TROUBLESHOOTING.md**: Detailed troubleshooting steps for PDF upload and resume parsing issues
 
 ---
 
@@ -419,6 +457,20 @@ DATABASE_URL=sqlite:///./resumeiq.db
 
 ## 🐛 Troubleshooting
 
+### Quick Diagnostics
+Run the built-in diagnostic tool to identify issues:
+```bash
+cd resumeiq/backend
+python diagnostic.py
+```
+This will check:
+- Model loading status
+- Database connectivity
+- Environment configuration
+- Package dependencies
+
+For detailed resume upload issues, see **RESUME_UPLOAD_TROUBLESHOOTING.md**
+
 ### Model Loading Issues
 | Problem | Solution |
 |---------|----------|
@@ -440,6 +492,8 @@ DATABASE_URL=sqlite:///./resumeiq.db
 | "Email already exists" | Use different email or login |
 | "Login failed" | Check email and password |
 | "Data not saving" | Ensure you're logged in |
+| "Token expired" | Run `python TOKEN_FIX.py` to refresh tokens |
+| "Session lost" | Use TOKEN_FIX.py to recover authentication |
 
 ### API Issues
 | Problem | Solution |
