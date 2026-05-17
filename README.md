@@ -44,9 +44,44 @@ ResumeIQ includes **18 advanced features** for resume analysis, job matching, an
 | **🔥 Streak Tracking** | Maintain daily usage streaks, track longest streak, and gamify user engagement |
 | **👥 Mentorship Matching** | Connect with verified mentors, get personalized recommendations, build professional network |
 
+### Career Toolkit Features (4)
+| Feature | Description |
+|---------|-------------|
+| **💼 LinkedIn Optimizer** | Optimize LinkedIn profile headline and about section for recruiter visibility |
+| **⭐ STAR Responses** | Generate STAR method interview responses for behavioral questions by difficulty level |
+| **📧 Email Templates** | Generate professional, personalized emails for job search (outreach, follow-up, networking) |
+| **🎁 Portfolio Showcase** | Showcase projects and achievements with filtering by technology domain |
+
+---
+
+## 🎉 Latest Updates (v2.1)
+
+Recent improvements to enhance user experience and reliability:
+
+### Resume Analyzer Enhancements
+- ✅ **Dynamic Scoring** - Resume scores now vary based on actual content analysis (structure, metrics, skills, formatting)
+- ✅ **Comprehensive Analysis** - Detects strengths, weaknesses, and actionable suggestions automatically
+- ✅ **Enhanced Skills Display** - Shows matched skills, missing skills, and top priorities in attractive cards
+- ✅ **Increased Capacity** - Resume character limit increased from 1,500 to 10,000 characters (~2000+ words)
+- ✅ **Improved UI** - Beautiful gradient score display with feedback messages and better visual hierarchy
+
+### Career Toolkit Improvements
+- ✅ **Fixed Tab Navigation** - All tabs (LinkedIn, STAR, Email, Portfolio) now switch smoothly without page reload
+- ✅ **Professional Email Templates** - Email generation now uses curated templates instead of unreliable model output
+- ✅ **Better STAR Responses** - STAR interview responses organized by difficulty level (Easy/Medium/Advanced)
+- ✅ **Smooth Animations** - Fixed motion component animations with proper transitions
+- ✅ **Portfolio Showcase** - Add projects with automatic categorization and filtering
+
+### Technical Improvements
+- ✅ **Reliable Content Generation** - Replaced JSON parsing with template-based generation for consistency
+- ✅ **Better Code Reliability** - Removed sticky positioning issues and animation glitches
+- ✅ **Skill Extraction** - Improved technology and skill detection from resumes
+- ✅ **UI Consistency** - Standardized animations across all components
+
 ---
 
 ## 🎯 Quick Start
+
 
 ### Prerequisites
 - Node.js 16+ (for React frontend)
