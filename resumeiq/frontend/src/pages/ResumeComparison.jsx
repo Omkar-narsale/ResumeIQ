@@ -18,8 +18,8 @@ export const ResumeComparison = () => {
 
     try {
       const data = await call('POST', '/api/compare-resumes', {
-        resume1: resume1.slice(0, 1500),
-        resume2: resume2.slice(0, 1500)
+        resume1: resume1.slice(0, 10000),
+        resume2: resume2.slice(0, 10000)
       })
       setResult(data)
     } catch (err) {
@@ -41,24 +41,24 @@ export const ResumeComparison = () => {
             <label className="block text-sm font-medium mb-2">Resume 1:</label>
             <textarea
               value={resume1}
-              onChange={(e) => setResume1(e.target.value.slice(0, 1500))}
+              onChange={(e) => setResume1(e.target.value.slice(0, 10000))}
               placeholder="Paste first resume..."
               className="w-full h-40 resize-none"
-              maxLength={1500}
+              maxLength={10000}
             />
-            <p className="text-xs text-gray-400 mt-2">{resume1.length}/1500 characters</p>
+            <p className="text-xs text-gray-400 mt-2">{resume1.length}/10000 characters</p>
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-2">Resume 2:</label>
             <textarea
               value={resume2}
-              onChange={(e) => setResume2(e.target.value.slice(0, 1500))}
+              onChange={(e) => setResume2(e.target.value.slice(0, 10000))}
               placeholder="Paste second resume..."
               className="w-full h-40 resize-none"
-              maxLength={1500}
+              maxLength={10000}
             />
-            <p className="text-xs text-gray-400 mt-2">{resume2.length}/1500 characters</p>
+            <p className="text-xs text-gray-400 mt-2">{resume2.length}/10000 characters</p>
           </div>
         </div>
 

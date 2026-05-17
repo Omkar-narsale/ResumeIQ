@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react'
+import React, { useState, useContext, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AuthContext } from '../context/AuthContext'
 import { Card, CardTitle, CardContent } from '../components/Card'
@@ -16,6 +16,11 @@ const tabs = [
 
 export const CareerToolkit = ({ initialTab = 'linkedin' }) => {
   const [activeTab, setActiveTab] = useState(initialTab)
+  const [key, setKey] = useState(0)
+
+  useEffect(() => {
+    setKey(prev => prev + 1)
+  }, [activeTab])
 
   const renderContent = () => {
     switch (activeTab) {
@@ -70,11 +75,11 @@ export const CareerToolkit = ({ initialTab = 'linkedin' }) => {
 
       <AnimatePresence mode="wait">
         <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3 }}
+          key={`${activeTab}-${key}`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
         >
           {renderContent()}
         </motion.div>
@@ -144,7 +149,9 @@ const LinkedInOptimizer = () => {
         {/* Input Form */}
         <motion.div
           className="bg-gray-800 bg-opacity-50 p-6 rounded-lg border border-gray-700"
-          variants={itemVariants}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
         >
           <h3 className="text-lg font-semibold text-white mb-4">Profile Information</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -407,8 +414,10 @@ const StarResponses = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Input Form */}
         <motion.div
-          className="bg-gray-800 bg-opacity-50 p-6 rounded-lg border border-gray-700 h-fit sticky top-6"
-          variants={itemVariants}
+          className="bg-gray-800 bg-opacity-50 p-6 rounded-lg border border-gray-700"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
         >
           <h3 className="text-lg font-semibold text-white mb-4">Generate STAR Response</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -696,7 +705,7 @@ const EmailTemplates = () => {
       }
       const data = await response.json()
       setResult(data)
-      setEditedBody(data.body)
+      setEditedBody(data.email_body)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -736,8 +745,10 @@ const EmailTemplates = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Input Form */}
         <motion.div
-          className="bg-gray-800 bg-opacity-50 p-6 rounded-lg border border-gray-700 h-fit sticky top-6"
-          variants={itemVariants}
+          className="bg-gray-800 bg-opacity-50 p-6 rounded-lg border border-gray-700"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
         >
           <h3 className="text-lg font-semibold text-white mb-4">Compose Email</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -925,13 +936,13 @@ const EmailTemplates = () => {
                   />
                 ) : (
                   <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap bg-gray-800/30 p-3 rounded max-h-48 overflow-y-auto">
-                    {result.body}
+                    {result.email_body}
                   </p>
                 )}
 
                 <div className="flex gap-2">
                   <motion.button
-                    onClick={() => copyToClipboard(editMode ? editedBody : result.body, 'body')}
+                    onClick={() => copyToClipboard(editMode ? editedBody : result.email_body, 'body')}
                     className={`flex-1 text-sm font-medium px-3 py-2 rounded transition-all ${
                       copied === 'body'
                         ? 'bg-green-500/20 text-green-400'
@@ -942,7 +953,7 @@ const EmailTemplates = () => {
                     {copied === 'body' ? '✓ Copied!' : '📋 Copy Body'}
                   </motion.button>
                   <motion.button
-                    onClick={() => copyToClipboard(`${result.subject_line}\n\n${editMode ? editedBody : result.body}`, 'full')}
+                    onClick={() => copyToClipboard(`${result.subject_line}\n\n${editMode ? editedBody : result.email_body}`, 'full')}
                     className={`flex-1 text-sm font-medium px-3 py-2 rounded transition-all ${
                       copied === 'full'
                         ? 'bg-green-500/20 text-green-400'
@@ -990,108 +1001,6 @@ const EmailTemplates = () => {
           )}
         </AnimatePresence>
       </div>
-    </ToolkitSection>
-  )
-}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Role</label>
-              <input
-                type="text"
-                value={formData.role}
-                onChange={(e) => setFormData({...formData, role: e.target.value})}
-                placeholder="Senior Software Engineer"
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Additional Context (optional)</label>
-              <textarea
-                value={formData.additional_context}
-                onChange={(e) => setFormData({...formData, additional_context: e.target.value})}
-                placeholder="Any additional details to personalize the email..."
-                rows="2"
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Generating...' : 'Generate Email'}
-            </button>
-
-            {error && <p className="text-red-400 text-sm">{error}</p>}
-          </form>
-        </motion.div>
-
-        {/* Results */}
-        {result && (
-          <motion.div
-            className="space-y-4"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
-            <div className="bg-gray-800 bg-opacity-50 p-4 rounded-lg border border-gray-700">
-              <h4 className="text-white font-semibold mb-2">📌 Subject Line</h4>
-              <p className="text-gray-300 mb-3 font-medium">{result.subject_line}</p>
-              <button
-                onClick={() => copyToClipboard(result.subject_line)}
-                className="text-blue-400 hover:text-blue-300 text-sm font-medium"
-              >
-                📋 Copy
-              </button>
-            </div>
-
-            <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-1 rounded-lg">
-              <div className="bg-gray-900 p-4 rounded">
-                <h4 className="text-white font-semibold mb-3">✉️ Email Body</h4>
-                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap mb-3">{result.email_body}</p>
-                <button
-                  onClick={() => copyToClipboard(result.email_body)}
-                  className="text-blue-400 hover:text-blue-300 text-sm font-medium"
-                >
-                  📋 Copy Email
-                </button>
-              </div>
-            </div>
-
-            {result.tips && (
-              <div className="bg-gray-800 bg-opacity-50 p-4 rounded-lg border border-gray-700">
-                <h4 className="text-white font-semibold mb-3">💡 Tips</h4>
-                <ul className="space-y-2">
-                  {result.tips.map((tip, i) => (
-                    <li key={i} className="text-sm text-gray-300">
-                      <span className="text-blue-400 mr-2">→</span>{tip}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </motion.div>
-        )}
-      </div>
-
-      {!result && (
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
-          variants={containerVariants}
-        >
-          {templateTypes.map((type) => (
-            <ToolkitCard
-              key={type.value}
-              icon={type.label.split(' ')[0]}
-              title={type.label.substring(2)}
-              description="Professional email template"
-              tags={['Template', 'Personalized', 'Ready-to-use']}
-            />
-          ))}
-        </motion.div>
-      )}
     </ToolkitSection>
   )
 }
@@ -1180,7 +1089,9 @@ const PortfolioShowcase = () => {
       {/* Domain Filter */}
       <motion.div
         className="flex gap-2 flex-wrap mb-6"
-        variants={containerVariants}
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
       >
         {domains.map((domain) => (
           <motion.button
@@ -1287,14 +1198,18 @@ const PortfolioShowcase = () => {
       {/* Portfolio Grid */}
       <motion.div
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        variants={containerVariants}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3, staggerChildren: 0.1 }}
       >
         {filteredItems.map((project) => (
           <motion.div
             key={project.id}
             className="bg-gray-800 bg-opacity-50 border border-gray-700 rounded-lg p-6 hover:border-blue-500 hover:bg-blue-500 hover:bg-opacity-5 transition-all group"
             whileHover={{ y: -8 }}
-            variants={itemVariants}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
           >
             <div className="flex justify-between items-start mb-3">
               <h3 className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors">{project.title}</h3>

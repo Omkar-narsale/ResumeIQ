@@ -206,39 +206,121 @@ def generate_suggestions(matched: Set[str], missing: Set[str],
     return suggestions[:4]  # Return top 4 suggestions
 
 def analyze_resume(resume_text: str) -> dict:
-    prompt = f"""Analyze this resume and return a JSON response with:
-- score (0-10)
-- strengths (list of 3-5 items)
-- weaknesses (list of 3-5 items)
-- suggestions (list of 3-5 items)
-- skills_matched (inferred list)
-- skills_missing (suggested list)
-- priority_skills (top 3)
-- roadmap (list of 2-3 phases with goals)
+    """Analyze resume with actual scoring based on content"""
+    text_lower = resume_text.lower()
+    score = 0
+    strengths = []
+    weaknesses = []
+    suggestions = []
 
-Resume:
-{resume_text[:1500]}
+    # SCORING LOGIC
+    # Structure & Organization (max 2 points)
+    if any(keyword in text_lower for keyword in ['summary', 'objective', 'profile']):
+        score += 1
+        strengths.append("✓ Professional summary included")
+    else:
+        weaknesses.append("✗ Missing professional summary or objective")
+        suggestions.append("Add a professional summary at the top of your resume")
 
-JSON Response:"""
+    if any(keyword in text_lower for keyword in ['education', 'degree', 'university', 'college']):
+        score += 1
+        strengths.append("✓ Education section present")
+    else:
+        weaknesses.append("✗ No education section found")
+        suggestions.append("Include your education details")
 
-    response = infer(prompt)
-    result = parse_json_response(response)
+    # Experience & Metrics (max 2.5 points)
+    if any(keyword in text_lower for keyword in ['worked', 'led', 'managed', 'developed', 'created', 'built']):
+        score += 1
+        strengths.append("✓ Action-oriented language detected")
+    else:
+        weaknesses.append("✗ Lacks strong action verbs")
+        suggestions.append("Use powerful action verbs like Led, Managed, Developed")
 
-    # Ensure required fields with defaults
+    metrics_found = len(re.findall(r'\d+%|\$\d+|increased|improved|reduced', text_lower))
+    if metrics_found >= 3:
+        score += 1.5
+        strengths.append("✓ Good use of metrics and quantification")
+    elif metrics_found >= 1:
+        score += 0.5
+        weaknesses.append("✗ Limited metrics and numbers")
+        suggestions.append("Add more quantified results (%, $, time saved)")
+    else:
+        weaknesses.append("✗ No metrics found")
+        suggestions.append("Quantify your achievements with numbers and percentages")
+
+    # Skills (max 2 points)
+    tech_skills = extract_skills(resume_text)
+    if len(tech_skills) >= 5:
+        score += 1
+        strengths.append(f"✓ Solid technical foundation ({len(tech_skills)} skills)")
+    elif len(tech_skills) > 0:
+        score += 0.5
+        suggestions.append(f"Expand technical skills - currently showing {len(tech_skills)} skills")
+    else:
+        suggestions.append("Explicitly list your technical skills")
+
+    if any(keyword in text_lower for keyword in ['communication', 'team', 'leadership', 'collaboration']):
+        score += 1
+        strengths.append("✓ Soft skills highlighted")
+    else:
+        suggestions.append("Highlight soft skills like teamwork, communication, leadership")
+
+    # Formatting & Clarity (max 1.5 points)
+    line_count = len(resume_text.split('\n'))
+    if 10 <= line_count <= 50:
+        score += 1
+        strengths.append("✓ Well-structured layout")
+    else:
+        suggestions.append("Optimize resume length (ideally 15-40 lines)")
+
+    if len(resume_text) > 500:
+        score += 0.5
+        strengths.append("✓ Substantial content")
+
+    # Ensure score is between 0-10
+    score = min(10, max(0, score))
+
+    # Extract actual skills from resume
+    skills_matched = list(tech_skills)[:10] if tech_skills else ["Python", "Communication", "Problem Solving"]
+
+    # Priority skills (most important for tech roles)
+    priority_tech = [s for s in skills_matched if s in ["Python", "Java", "JavaScript", "System Design", "AWS", "Leadership"]]
+    priority_skills = priority_tech[:3] if priority_tech else skills_matched[:3]
+
+    # Skills to learn
+    skills_missing = []
+    all_tech = {"Cloud": ["AWS", "Azure", "GCP"], "Backend": ["Node.js", "Django", "Spring"],
+                "Frontend": ["React", "Vue", "Angular"], "DevOps": ["Docker", "Kubernetes", "CI/CD"],
+                "Data": ["SQL", "Spark", "Tableau"]}
+    for category, techs in all_tech.items():
+        if not any(t.lower() in text_lower for t in techs):
+            skills_missing.extend(techs[:2])
+
+    # Default suggestions if few generated
+    if not suggestions:
+        suggestions = [
+            "Add quantified achievements and metrics",
+            "Use strong action verbs throughout",
+            "Organize by most relevant experience",
+            "Highlight key projects or accomplishments"
+        ]
+
     return {
-        "score": float(result.get("score", 7.0)),
-        "strengths": result.get("strengths", ["Clear structure", "Good experience"]),
-        "weaknesses": result.get("weaknesses", ["Limited metrics", "Needs quantification"]),
-        "suggestions": result.get("suggestions", ["Add quantified achievements", "Improve action verbs"]),
-        "skills_matched": result.get("skills_matched", ["Python", "Communication"]),
-        "skills_missing": result.get("skills_missing", ["Kubernetes", "Advanced AWS"]),
-        "priority_skills": result.get("priority_skills", ["System Design", "Cloud Architecture"]),
-        "roadmap": result.get("roadmap", [
-            {"phase": "Week 1-2", "focus": "Master fundamentals"},
-            {"phase": "Week 3-4", "focus": "Build projects"},
-            {"phase": "Week 5+", "focus": "Interview prep"}
-        ])
+        "score": round(score, 1),
+        "strengths": strengths[:5] if strengths else ["Good foundation", "Clear structure"],
+        "weaknesses": weaknesses[:5] if weaknesses else ["Could add more metrics"],
+        "suggestions": suggestions[:5],
+        "skills_matched": skills_matched,
+        "skills_missing": skills_missing[:5],
+        "priority_skills": priority_skills,
+        "roadmap": [
+            {"phase": "Week 1-2", "focus": f"Master {priority_skills[0] if priority_skills else 'core skills'}"},
+            {"phase": "Week 3-4", "focus": "Build portfolio projects"},
+            {"phase": "Week 5+", "focus": "Interview preparation & system design"}
+        ]
     }
+
 
 def rewrite_resume(resume_text: str) -> dict:
     prompt = f"""Rewrite this resume section to be more professional, impactful, and ATS-friendly.
@@ -1002,74 +1084,189 @@ JSON Response:"""
 
 def generate_star_response(question: str, difficulty: str = "medium", domain: str = None) -> dict:
     """Generate STAR method interview response"""
-    domain_context = f" for a {domain} professional" if domain else ""
 
-    prompt = f"""Generate a professional STAR interview response{domain_context} to this behavioral question.
+    # STAR response templates by difficulty and question type
+    star_templates = {
+        "easy": {
+            "situation": "During my time at my previous company, I encountered a common workplace challenge that required collaboration and communication.",
+            "task": "I was responsible for addressing this issue as part of my regular duties.",
+            "action": "I took initiative by gathering information, communicating with relevant stakeholders, and implementing a straightforward solution.",
+            "result": "This resulted in a positive outcome and helped the team work more efficiently."
+        },
+        "medium": {
+            "situation": "In my previous role as a {role}, I was faced with a complex situation that required strategic thinking and problem-solving. The team was struggling with a critical issue that impacted our project timeline and team morale.",
+            "task": "I was tasked with identifying the root cause, developing a solution, and leading the implementation while managing stakeholder expectations.",
+            "action": "I conducted a thorough analysis of the problem, collaborated with cross-functional teams to gather insights, created a detailed action plan, and communicated progress regularly. I also provided coaching and support to team members throughout the implementation.",
+            "result": "As a result, we successfully resolved the issue 2 weeks ahead of schedule, improved team productivity by 35%, and established best practices that prevented similar issues in the future."
+        },
+        "advanced": {
+            "situation": "At my organization, we faced a mission-critical challenge that threatened our Q{quarter} deliverables. Multiple departments were impacted, and there was significant uncertainty about how to proceed. The stakes were high - failure would have resulted in major revenue loss and damaged client relationships.",
+            "task": "As a senior team member, I was tasked with taking ownership of the crisis management, coordinating between 5+ teams, securing executive support, and delivering a comprehensive solution within an extremely tight timeline.",
+            "action": "I immediately assembled a cross-functional task force, conducted a rapid impact assessment, and created a detailed recovery plan with clear milestones. I leveraged data-driven insights to prioritize efforts, maintained constant communication with all stakeholders, and personally led the implementation of the most critical components. I also managed risks proactively and adjusted the strategy based on real-time feedback.",
+            "result": "We successfully recovered and delivered on time with only 5% scope reduction. The initiative resulted in a 40% improvement in process efficiency, saved the company $500K in potential losses, earned recognition from C-suite executives, and became a case study for crisis management best practices."
+        }
+    }
 
-Difficulty Level: {difficulty}
-Question: {question}
+    # Select template based on difficulty
+    template_level = difficulty.lower() if difficulty in ["easy", "medium", "advanced"] else "medium"
+    template = star_templates.get(template_level, star_templates["medium"])
 
-Return JSON with:
-- situation (2-3 sentences describing the context)
-- task (1-2 sentences explaining the challenge/responsibility)
-- action (3-4 sentences describing specific actions taken)
-- result (2-3 sentences with quantified outcomes and impact)
-
-JSON Response:"""
-
-    response = infer(prompt, max_tokens=600)
-    result = parse_json_response(response)
-
-    full_answer = f"{result.get('situation', '')} {result.get('task', '')} {result.get('action', '')} {result.get('result', '')}"
+    # Customize with domain if provided
+    if domain:
+        template["situation"] = template["situation"].replace("{role}", domain)
 
     return {
-        "situation": result.get("situation", "In my previous role..."),
-        "task": result.get("task", "I was tasked with..."),
-        "action": result.get("action", "I took the following steps..."),
-        "result": result.get("result", "As a result, we achieved..."),
-        "full_answer": full_answer,
-        "difficulty_tag": difficulty.capitalize()
+        "situation": template["situation"],
+        "task": template["task"],
+        "action": template["action"],
+        "result": template["result"],
+        "full_answer": f"{template['situation']} {template['task']} {template['action']} {template['result']}",
+        "difficulty_tag": template_level.capitalize()
     }
+
 
 def generate_email_template(template_type: str, user_name: str, company_name: str, role: str, context: str = "") -> dict:
     """Generate professional career-related email templates"""
-    template_instructions = {
-        "job_outreach": "Write a compelling job application outreach email",
-        "follow_up": "Write a professional follow-up email after interview",
-        "networking": "Write a thoughtful networking request email",
-        "internship": "Write an internship inquiry email",
-        "rejection_response": "Write a professional rejection response email"
+
+    # Subject lines for each template type
+    subject_lines = {
+        "job_outreach": f"Interested in {role} Position at {company_name}",
+        "follow_up": f"Following Up on {role} Application - {company_name}",
+        "networking": f"Let's Connect - {role} Professional",
+        "internship": f"Internship Opportunity Inquiry - {company_name}",
+        "rejection_response": f"Thank You - {company_name} Application",
+        "referral_request": f"Referral Request for {role} at {company_name}"
     }
 
-    instruction = template_instructions.get(template_type, "Write a professional email")
+    # Email body templates
+    email_templates = {
+        "job_outreach": f"""Dear Hiring Manager,
 
-    prompt = f"""{instruction}.
+I am writing to express my strong interest in the {role} position at {company_name}. With my background and passion for this field, I am confident I can contribute meaningfully to your team.
 
-User Name: {user_name}
-Company: {company_name}
-Role: {role}
-Additional Context: {context}
+{f"Context: {context}" if context else "I am particularly drawn to your company's commitment to innovation and excellence."}
 
-Return JSON with:
-- subject_line (compelling, specific subject)
-- email_body (professional 150-250 word email body)
-- tips (list of 3-4 tips for sending this type of email)
+I would welcome the opportunity to discuss how my skills and experience align with your team's needs. Please feel free to contact me at your convenience.
 
-JSON Response:"""
+Thank you for considering my application.
 
-    response = infer(prompt, max_tokens=500)
-    result = parse_json_response(response)
+Best regards,
+{user_name}""",
+
+        "follow_up": f"""Hi,
+
+I wanted to follow up regarding my application for the {role} position at {company_name}. I remain very interested in this opportunity and would love to hear any updates.
+
+I'm excited about the possibility of joining your team and contributing to your success. Please let me know if you need any additional information from my end.
+
+Thank you for your time and consideration.
+
+Best regards,
+{user_name}""",
+
+        "networking": f"""Hi,
+
+I hope this email finds you well. I came across your profile and was impressed by your work in the {role} space at {company_name}. I would appreciate the opportunity to connect and learn from your experiences.
+
+{f"Context: {context}" if context else "I'm eager to build meaningful professional relationships and explore potential opportunities."}
+
+Would you be available for a brief call or coffee chat? I'm happy to work around your schedule.
+
+Thank you for considering my request.
+
+Best regards,
+{user_name}""",
+
+        "internship": f"""Dear {company_name} Team,
+
+I am writing to express my interest in an internship opportunity with your organization, specifically in the {role} department. I am a motivated student eager to gain practical experience and contribute to your team.
+
+{f"Context: {context}" if context else "I have strong foundational knowledge and a genuine passion for this field."}
+
+I would greatly appreciate the opportunity to discuss how I can add value to your team during an internship. Thank you for your consideration.
+
+Best regards,
+{user_name}""",
+
+        "rejection_response": f"""Dear {company_name} Team,
+
+Thank you so much for considering my application for the {role} position. While I'm disappointed not to move forward at this time, I genuinely appreciate the opportunity and the insights I gained during the interview process.
+
+Your commitment to excellence and innovation aligns perfectly with my career goals. I would love to stay connected and explore future opportunities with your organization.
+
+Thank you again for your time and consideration.
+
+Best regards,
+{user_name}""",
+
+        "referral_request": f"""Hi,
+
+I hope you're doing well. I'm reaching out because I'm very interested in the {role} opportunity at {company_name}, and I believe I would be a great fit for the team.
+
+{f"Context: {context}" if context else "I have relevant experience and am passionate about contributing to your organization."}
+
+Would you be willing to refer me for this position? I would be grateful for your support.
+
+Thank you for considering my request.
+
+Best regards,
+{user_name}"""
+    }
+
+    tips_map = {
+        "job_outreach": [
+            "Research the company thoroughly before reaching out",
+            "Personalize your message with specific details about why you're interested",
+            "Keep your tone professional yet warm and approachable",
+            "Include a clear call-to-action or next steps"
+        ],
+        "follow_up": [
+            "Follow up within 1-2 weeks of your initial application",
+            "Reference specific details from your previous communication",
+            "Reiterate your enthusiasm for the role",
+            "Keep it concise - respect their time"
+        ],
+        "networking": [
+            "Personalize with specific details about their work or company",
+            "Clearly explain why you're interested in connecting",
+            "Propose a specific way to connect (call, coffee, etc.)",
+            "Be genuine and respectful of their time"
+        ],
+        "internship": [
+            "Show genuine enthusiasm for the company and role",
+            "Highlight relevant coursework or projects",
+            "Mention your availability and flexibility",
+            "Express eagerness to learn and contribute"
+        ],
+        "rejection_response": [
+            "Send within 24-48 hours of receiving the rejection",
+            "Thank them sincerely for the opportunity",
+            "Express interest in future opportunities",
+            "Keep doors open for potential future roles"
+        ],
+        "referral_request": [
+            "Have an existing professional relationship before asking for a referral",
+            "Make it easy for them by providing your resume and role details",
+            "Explain why you're a good fit for the position",
+            "Offer to help them in any way you can"
+        ]
+    }
+
+    subject_line = subject_lines.get(template_type, f"Interested in {role} at {company_name}")
+    email_body = email_templates.get(template_type, f"Hi,\n\nI am interested in the {role} position at {company_name}.\n\nBest regards,\n{user_name}")
+    tips = tips_map.get(template_type, [
+        "Personalize with specific details",
+        "Keep professional but warm tone",
+        "Include clear call-to-action",
+        "Proofread before sending"
+    ])
 
     return {
-        "subject_line": result.get("subject_line", f"Interested in {role} at {company_name}"),
-        "email_body": result.get("email_body", f"Hi,\n\nI am interested in the {role} position at {company_name}."),
-        "tips": result.get("tips", [
-            "Personalize with specific details from company research",
-            "Keep subject line clear and action-oriented",
-            "Use professional but warm tone",
-            "Include clear call-to-action"
-        ])
+        "subject_line": subject_line,
+        "email_body": email_body,
+        "tips": tips
     }
+
 
 def batch_match_jobs(resume_text: str, job_descriptions: List[str]) -> dict:
     """Compare resume against multiple job descriptions"""
