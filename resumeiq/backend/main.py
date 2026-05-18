@@ -9,7 +9,7 @@ import bcrypt
 import os
 from dotenv import load_dotenv
 
-from database import get_db, init_db, User, Analysis, Resume, InterviewSession, Achievement, UserStreak
+from database import get_db, init_db, User, Analysis, Resume, InterviewSession, Achievement, UserStreak, ChatMessage
 from models import (
     UserSignup, UserLogin, Token, UserResponse, AnalysisRequest, AnalysisResult,
     RewriteRequest, RewriteResult, MatchRequest, MatchResult, InterviewRequest,
@@ -19,7 +19,7 @@ from models import (
     ResumeVersionRequest, ResumeVersionResult,
     BatchJobMatchRequest, BatchJobMatchResult, ResumeDownloadRequest, AchievementRequest, AchievementResult,
     LinkedInOptimizerRequest, LinkedInOptimizerResult, StarResponseRequest, StarResponseResult,
-    EmailTemplateRequest, EmailTemplateResult
+    EmailTemplateRequest, EmailTemplateResult, ChatRequest, ChatResponse, ChatHistory
 )
 from extract_text import extract_text_from_pdf
 import inference
@@ -505,6 +505,85 @@ async def generate_email_template(req: EmailTemplateRequest, authorization: str 
     db.commit()
 
     return result
+
+@app.post("/api/chat", response_model=ChatResponse)
+async def chat(req: ChatRequest, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    resume_context = {}
+    if req.resume_context:
+        resume_context = req.resume_context
+    else:
+        resume = db.query(Resume).filter(Resume.user_id == user.id, Resume.is_active == True).first()
+        if resume:
+            resume_context = {
+                "extracted_text": resume.extracted_text,
+                "filename": resume.filename
+            }
+
+    response = inference.career_copilot_chat(
+        req.user_message,
+        req.mode,
+        resume_context,
+        req.conversation_history or []
+    )
+
+    user_message = ChatMessage(
+        user_id=user.id,
+        mode=req.mode,
+        role="user",
+        content=req.user_message
+    )
+    db.add(user_message)
+
+    assistant_message = ChatMessage(
+        user_id=user.id,
+        mode=req.mode,
+        role="assistant",
+        content=response["response"]
+    )
+    db.add(assistant_message)
+    db.commit()
+
+    return response
+
+@app.get("/api/chat/history")
+async def get_chat_history(mode: str, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    messages = db.query(ChatMessage).filter(
+        ChatMessage.user_id == user.id,
+        ChatMessage.mode == mode
+    ).order_by(ChatMessage.created_at).all()
+
+    return {
+        "mode": mode,
+        "messages": [
+            {
+                "id": m.id,
+                "role": m.role,
+                "content": m.content,
+                "created_at": m.created_at
+            }
+            for m in messages
+        ],
+        "total_messages": len(messages)
+    }
+
+@app.delete("/api/chat/{mode}")
+async def clear_chat_history(mode: str, authorization: str = Header(...), db: Session = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user = get_current_user(token, db)
+
+    db.query(ChatMessage).filter(
+        ChatMessage.user_id == user.id,
+        ChatMessage.mode == mode
+    ).delete()
+    db.commit()
+
+    return {"success": True, "message": f"Chat history cleared for {mode}"}
 
 @app.get("/api/user-badges")
 async def get_user_badges(authorization: str = Header(...), db: Session = Depends(get_db)):

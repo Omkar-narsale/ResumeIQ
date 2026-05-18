@@ -108,6 +108,11 @@ export const navConfig = [
     type: 'group',
     items: [
       {
+        id: 'ai-career-copilot',
+        label: 'AI Career Copilot',
+        icon: '🤖'
+      },
+      {
         id: 'linkedin-optimizer',
         label: 'LinkedIn Optimizer',
         icon: '💼'

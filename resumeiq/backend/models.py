@@ -241,6 +241,33 @@ class EmailTemplateResult(BaseModel):
     email_body: str
     tips: List[str]
 
+class ChatRequest(BaseModel):
+    user_message: str
+    mode: str  # resume_expert, career_mentor, interview_coach
+    resume_context: Optional[dict] = None
+    conversation_history: Optional[List[dict]] = None
+
+class ChatResponse(BaseModel):
+    response: str
+    mode: str
+    word_count: int
+    timestamp: str
+    error: Optional[str] = None
+
+class ChatMessage(BaseModel):
+    id: int
+    role: str
+    content: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class ChatHistory(BaseModel):
+    mode: str
+    messages: List[ChatMessage]
+    total_messages: int
+
 class PortfolioItemRequest(BaseModel):
     title: str
     description: str

@@ -21,6 +21,7 @@ class User(Base):
 
     analyses = relationship("Analysis", back_populates="user")
     resumes = relationship("Resume", back_populates="user")
+    chat_messages = relationship("ChatMessage", back_populates="user")
 
 class Analysis(Base):
     __tablename__ = "analyses"
@@ -97,6 +98,22 @@ class UserStreak(Base):
     total_activities = Column(Integer, default=0)
 
     user = relationship("User")
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    mode = Column(String)  # resume_expert, career_mentor, interview_coach
+    role = Column(String)  # user or assistant
+    content = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    user = relationship("User", back_populates="chat_messages")
+
+    __table_args__ = (
+        Index("idx_user_mode_time", "user_id", "mode", "created_at"),
+    )
 
 def get_db():
     db = SessionLocal()

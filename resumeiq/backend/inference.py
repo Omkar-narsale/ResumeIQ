@@ -1314,3 +1314,80 @@ def batch_match_jobs(resume_text: str, job_descriptions: List[str]) -> dict:
         'all_results': results_sorted,
         'avg_score': round(sum(r['match_score'] for r in results) / len(results), 1) if results else 0
     }
+
+def career_copilot_chat(user_message: str, mode: str, resume_context: dict, conversation_history: list) -> dict:
+    """AI Career Copilot chat endpoint with context-aware responses."""
+
+    system_prompts = {
+        "resume_expert": """You are a professional resume expert. Provide specific, actionable feedback on resume content,
+formatting, ATS optimization, and job matching. Use the user's resume as context. Keep responses under 120 words.
+Always cite specific examples from their resume. Avoid generic advice. Be direct and practical.""",
+
+        "career_mentor": """You are an experienced career mentor. Guide users on skill development, career transitions,
+market trends, and strategic growth. Provide personalized advice based on their current skills and experience.
+Keep responses under 120 words. Focus on practical, actionable steps. Be encouraging and strategic.""",
+
+        "interview_coach": """You are an expert interview coach. Help users prepare for interviews, practice behavioral
+responses, and build confidence. Use their resume and role preferences as context. Keep responses under 120 words.
+Provide constructive, encouraging feedback. Focus on actionable tips and practice strategies."""
+    }
+
+    system_prompt = system_prompts.get(mode, system_prompts["career_mentor"])
+
+    resume_snippet = ""
+    if resume_context.get("extracted_text"):
+        resume_snippet = f"\nResume: {resume_context['extracted_text'][:400]}"
+
+    if resume_context.get("skills"):
+        skills_str = ", ".join(resume_context["skills"][:10])
+        resume_snippet += f"\nSkills: {skills_str}"
+
+    if resume_context.get("analysis_summary"):
+        resume_snippet += f"\nAnalysis: {resume_context['analysis_summary'][:150]}"
+
+    conversation_context = ""
+    if conversation_history:
+        last_messages = conversation_history[-3:]
+        for msg in last_messages:
+            role = "User" if msg.get("role") == "user" else "Assistant"
+            conversation_context += f"\n{role}: {msg.get('content', '')[:150]}"
+
+    prompt = f"""{system_prompt}{resume_snippet}{conversation_context}
+
+User's current question: {user_message}
+
+Respond concisely (under 120 words). Be specific and actionable."""
+
+    try:
+        response = infer(prompt, max_tokens=150, temperature=0.7)
+
+        sentences = response.split('.')
+        truncated = '.'.join(sentences[:5]).strip() + '.' if sentences else response.strip()
+        final_response = truncated.strip()
+
+        if not final_response or len(final_response) < 20:
+            fallback_responses = {
+                "resume_expert": "I'd love to help! Could you share which specific part of your resume you'd like to improve or what role you're targeting?",
+                "career_mentor": "Great question! I'd recommend identifying your target role, learning the required skills, and connecting with professionals in that field.",
+                "interview_coach": "Excellent! Practice with mock interviews, use the STAR method for behavioral questions, and research the company thoroughly."
+            }
+            final_response = fallback_responses.get(mode, fallback_responses["career_mentor"])
+
+        word_count = len(final_response.split())
+
+        return {
+            "response": final_response,
+            "mode": mode,
+            "word_count": word_count,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        print(f"Chat error: {e}")
+        fallback = "I'm having trouble processing that. Could you rephrase your question?"
+        return {
+            "response": fallback,
+            "mode": mode,
+            "error": str(e),
+            "word_count": len(fallback.split()),
+            "timestamp": datetime.now().isoformat()
+        }

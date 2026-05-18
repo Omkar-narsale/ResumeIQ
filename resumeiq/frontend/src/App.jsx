@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { AuthProvider, AuthContext } from './context/AuthContext'
 import { ResumeProvider } from './context/ResumeContext'
+import { ChatProvider } from './context/ChatContext'
 import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
 import { ResumeUpload } from './pages/ResumeUpload'
@@ -19,6 +20,7 @@ import { ResumeVersioning } from './pages/ResumeVersioning'
 import { BatchJobMatch } from './pages/BatchJobMatch'
 import { Achievements } from './pages/Achievements'
 import { CareerToolkit } from './pages/CareerToolkit'
+import { CareerCopilot } from './pages/CareerCopilot'
 import { Navbar } from './components/Navbar'
 import { Sidebar } from './components/Sidebar'
 
@@ -48,6 +50,7 @@ function MainApp() {
       case 'star-responses': return <CareerToolkit initialTab="star" />
       case 'email-templates': return <CareerToolkit initialTab="email" />
       case 'portfolio-showcase': return <CareerToolkit initialTab="portfolio" />
+      case 'ai-career-copilot': return <CareerCopilot />
       default: return <Dashboard onNavigate={setCurrentPage} />
     }
   }
@@ -78,26 +81,28 @@ function App() {
   return (
     <AuthProvider>
       <ResumeProvider>
-        <AuthContext.Consumer>
-          {({ token, loading }) => {
-            if (loading) {
-              return (
-                <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-gray-400">Loading...</p>
+        <ChatProvider>
+          <AuthContext.Consumer>
+            {({ token, loading }) => {
+              if (loading) {
+                return (
+                  <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                      <p className="text-gray-400">Loading...</p>
+                    </div>
                   </div>
-                </div>
-              )
-            }
+                )
+              }
 
-            if (!token) {
-              return <Login />
-            }
+              if (!token) {
+                return <Login />
+              }
 
-            return <MainApp />
-          }}
-        </AuthContext.Consumer>
+              return <MainApp />
+            }}
+          </AuthContext.Consumer>
+        </ChatProvider>
       </ResumeProvider>
     </AuthProvider>
   )
