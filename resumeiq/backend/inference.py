@@ -13,7 +13,9 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from docx import Document
 from docx.shared import Pt, RGBColor, Inches
+from dotenv import load_dotenv
 
+load_dotenv()
 MODEL_NAME = os.getenv("MODEL_NAME", "distilgpt2")
 DEVICE = os.getenv("DEVICE", "cpu")
 

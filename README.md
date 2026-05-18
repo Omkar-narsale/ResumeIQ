@@ -44,9 +44,10 @@ ResumeIQ includes **18 advanced features** for resume analysis, job matching, an
 | **🔥 Streak Tracking** | Maintain daily usage streaks, track longest streak, and gamify user engagement |
 | **👥 Mentorship Matching** | Connect with verified mentors, get personalized recommendations, build professional network |
 
-### Career Toolkit Features (4)
+### Career Toolkit Features (5)
 | Feature | Description |
 |---------|-------------|
+| **🤖 AI Career Copilot** | Intelligent assistant with Resume Expert, Career Mentor, and Interview Coach modes powered by TinyLlama |
 | **💼 LinkedIn Optimizer** | Optimize LinkedIn profile headline and about section for recruiter visibility |
 | **⭐ STAR Responses** | Generate STAR method interview responses for behavioral questions by difficulty level |
 | **📧 Email Templates** | Generate professional, personalized emails for job search (outreach, follow-up, networking) |
@@ -54,29 +55,43 @@ ResumeIQ includes **18 advanced features** for resume analysis, job matching, an
 
 ---
 
-## 🎉 Latest Updates (v2.1)
+## 🎉 Latest Updates (v2.2)
 
-Recent improvements to enhance user experience and reliability:
+Recent improvements and new features:
+
+### 🤖 AI Career Copilot (NEW)
+- ✅ **Resume Expert Mode** - Get specific, actionable feedback on resume content, ATS optimization, and improvements
+- ✅ **Career Mentor Mode** - Personalized career guidance, skill development strategies, and market insights
+- ✅ **Interview Coach Mode** - Interview preparation with tips, confidence building, and role-specific advice
+- ✅ **TinyLlama Integration** - Upgraded from distilgpt2 to TinyLlama (1.1B) for better analysis quality
+- ✅ **Chat History** - Persistent conversation tracking for each mode
+- ✅ **Suggested Prompts** - Quick-start prompts for common questions
+- ✅ **Resume Context Panel** - Displays resume info alongside chat for better context
+
+### Model Upgrade
+- ✅ **TinyLlama 1.1B** - All inference tasks now use improved TinyLlama model for better quality
+- ✅ **Better Analysis** - More accurate resume analysis, job matching, and suggestions
+- ✅ **Faster Inference** - Optimized model loading and cached for fast responses
+- ✅ **Local Processing** - Still 100% free, all processing local
 
 ### Resume Analyzer Enhancements
-- ✅ **Dynamic Scoring** - Resume scores now vary based on actual content analysis (structure, metrics, skills, formatting)
-- ✅ **Comprehensive Analysis** - Detects strengths, weaknesses, and actionable suggestions automatically
-- ✅ **Enhanced Skills Display** - Shows matched skills, missing skills, and top priorities in attractive cards
-- ✅ **Increased Capacity** - Resume character limit increased from 1,500 to 10,000 characters (~2000+ words)
-- ✅ **Improved UI** - Beautiful gradient score display with feedback messages and better visual hierarchy
+- ✅ **Dynamic Scoring** - Resume scores vary based on actual content analysis
+- ✅ **Comprehensive Analysis** - Detects strengths, weaknesses, and actionable suggestions
+- ✅ **Enhanced Skills Display** - Shows matched, missing, and priority skills
+- ✅ **Increased Capacity** - Resume limit increased to 10,000 characters
 
 ### Career Toolkit Improvements
-- ✅ **Fixed Tab Navigation** - All tabs (LinkedIn, STAR, Email, Portfolio) now switch smoothly without page reload
-- ✅ **Professional Email Templates** - Email generation now uses curated templates instead of unreliable model output
-- ✅ **Better STAR Responses** - STAR interview responses organized by difficulty level (Easy/Medium/Advanced)
-- ✅ **Smooth Animations** - Fixed motion component animations with proper transitions
-- ✅ **Portfolio Showcase** - Add projects with automatic categorization and filtering
+- ✅ **Fixed Tab Navigation** - All tabs switch smoothly without page reload
+- ✅ **Professional Email Templates** - Curated templates for job search emails
+- ✅ **Better STAR Responses** - Organized by difficulty level (Easy/Medium/Advanced)
+- ✅ **Smooth Animations** - Fixed motion component animations
+- ✅ **Portfolio Showcase** - Add and filter projects by technology
 
 ### Technical Improvements
-- ✅ **Reliable Content Generation** - Replaced JSON parsing with template-based generation for consistency
-- ✅ **Better Code Reliability** - Removed sticky positioning issues and animation glitches
-- ✅ **Skill Extraction** - Improved technology and skill detection from resumes
-- ✅ **UI Consistency** - Standardized animations across all components
+- ✅ **Model Configuration** - Easy .env setup for different Hugging Face models
+- ✅ **CORS Fixes** - Improved cross-origin request handling
+- ✅ **Better Error Handling** - More robust API responses
+- ✅ **Code Reliability** - Template-based generation for consistency
 
 ---
 
@@ -135,16 +150,23 @@ npm run dev
 
 ### Model Configuration
 
-The backend uses **Hugging Face Transformers** models (distilgpt2 by default):
+The backend uses **Hugging Face Transformers** with **TinyLlama** (1.1B) by default for improved analysis quality:
 
 ```bash
 # Configure model in .env (resumeiq/backend/.env)
-MODEL_NAME=distilgpt2        # Default model
-# Other options: gpt2, distilgpt2, other HF models
+MODEL_NAME=TinyLlama/TinyLlama-1.1B-Chat-v1.0  # Default model (recommended)
+# Other options: gpt2, distilgpt2, or any HuggingFace model
 
-# First run will download the model (~1-2GB)
+# First run will download the model (~2.5GB for TinyLlama)
 # Subsequent runs use cached model
 ```
+
+**Why TinyLlama?**
+- Better quality analysis and suggestions
+- Improved resume evaluation
+- Enhanced AI Career Copilot responses
+- Still local (100% free, no API keys)
+- Reasonable resource requirements
 
 ### Access the App
 
@@ -308,6 +330,18 @@ MODEL_NAME=distilgpt2        # Default model
 7. Send connection request
 8. Start mentoring relationship
 
+### 🤖 AI Career Copilot (NEW)
+1. Go to "Career Toolkit → 🤖 AI Career Copilot" page
+2. Select mode:
+   - **Resume Expert** - Get ATS optimization tips and resume improvement suggestions
+   - **Career Mentor** - Get career guidance, skill development strategies, and market insights
+   - **Interview Coach** - Get interview preparation help and confidence building tips
+3. Upload or paste your resume (optional but recommended)
+4. Type your question or select a suggested prompt
+5. Get personalized, actionable responses
+6. View chat history and continue the conversation
+7. Switch modes for different types of guidance
+
 ### 📊 Dashboard
 1. Go to "📊 Dashboard" page after logging in
 2. View:
@@ -424,7 +458,7 @@ python TOKEN_FIX.py
 ### Backend
 - **FastAPI** (0.100+) - Modern async Python framework
 - **Python** (3.8+) - Core language
-- **Hugging Face Transformers** - LLM inference (distilgpt2 default)
+- **Hugging Face Transformers** - LLM inference (TinyLlama 1.1B default)
 - **SQLAlchemy** - ORM for database
 - **SQLite** - Database for persistence
 - **Pydantic** - Data validation & schemas
@@ -478,7 +512,8 @@ python TOKEN_FIX.py
 Create `.env` file in `resumeiq/backend/`:
 ```env
 # Model configuration
-MODEL_NAME=distilgpt2        # Hugging Face model (default)
+MODEL_NAME=TinyLlama/TinyLlama-1.1B-Chat-v1.0  # Recommended (1.1B model)
+# MODEL_NAME=distilgpt2                         # Alternative (lighter, less accurate)
 DEVICE=cpu                   # cpu or gpu (0, 1, etc.)
 
 # Optional settings
@@ -486,7 +521,7 @@ DEBUG=false
 DATABASE_URL=sqlite:///./resumeiq.db
 ```
 
-**Note**: On first run, the model will be downloaded from Hugging Face (~1-2GB). This is cached for subsequent runs.
+**Note**: On first run with TinyLlama, the model will be downloaded from Hugging Face (~2.5GB). This is cached for subsequent runs.
 
 ---
 
@@ -661,10 +696,11 @@ Built with ❤️ using:
 
 | Metric | Value |
 |--------|-------|
-| **Total Features** | 18 (Complete Suite) |
+| **Total Features** | 19 (Complete Suite) |
 | **Core Features** | 8 |
 | **Advanced Features** | 7 |
 | **Gamification Features** | 3 |
+| **Career Toolkit Features** | 5 (including AI Copilot) |
 | **API Endpoints** | 32+ |
 | **Frontend Pages** | 20 |
 | **Database Tables** | 8 |
@@ -673,7 +709,7 @@ Built with ❤️ using:
 | **Analysis Time** | 2-4 seconds |
 | **Security** | Bcrypt + Session isolation |
 | **Cost** | 100% FREE |
-| **Model** | Hugging Face Transformers (distilgpt2) |
+| **Model** | TinyLlama 1.1B (Hugging Face Transformers) |
 | **Database** | SQLite (local) |
 
 ---
